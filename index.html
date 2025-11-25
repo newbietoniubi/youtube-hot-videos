@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>YouTube Shorts 分析仪表板</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1f2937;
+      --muted: #cbd5e1;
+      --text: #e2e8f0;
+      --primary: #22c55e;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 16px 20px; background: #111827; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 2; }
+    button { background: var(--primary); color: #0b1220; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; }
+    button.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+    main { padding: 16px 20px; display: grid; gap: 16px; }
+    .card { background: var(--panel); border-radius: 10px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.25); border: 1px solid #0b1220; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; color: var(--muted); }
+    input, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
+    .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    pre { white-space: pre-wrap; word-break: break-word; background: #0b1220; padding: 12px; border-radius: 8px; border: 1px solid var(--panel); max-height: 220px; overflow: auto; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .stat { padding: 12px; border-radius: 10px; background: #111827; border: 1px solid var(--border); }
+    .stat .label { color: var(--muted); font-size: 13px; }
+    .stat .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .charts { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .chart { height: 320px; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; color: var(--text); }
+    th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    .pagination { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    a.link { color: #38bdf8; text-decoration: none; }
+    a.link:hover { text-decoration: underline; }
+    .log-header { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+    .chevron { transition: transform .2s; display:inline-block; }
+    .chevron.open { transform: rotate(90deg); }
+    #log { max-height: 220px; }
+    .banner { display:none; margin-top:10px; padding:10px; border-radius:8px; background:#0ea5e9; color:#0b1220; font-weight:700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>📊 YouTube Shorts 分析仪表板</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="exportBtn" class="secondary">导出报告</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h3>触发采集（调用本地后端 /collect）</h3>
+      <div class="row">
+        <div>
+          <label for="keywords">关键词</label>
+          <input id="keywords" placeholder="例如：Roblox" />
+        </div>
+        <div>
+          <label for="maxResults">最大结果数（50-10000）</label>
+          <input id="maxResults" type="number" value="500" min="1" max="10000" />
+        </div>
+        <div>
+          <label for="days">最近 N 天（可留空）</label>
+          <input id="days" type="number" placeholder="留空=全部" />
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="collectBtn">🚀 开始采集</button>
+        <button id="clearLog" class="secondary">清空日志</button>
+      </div>
+      <div id="flash" class="banner"></div>
+      <div style="margin-top:12px;">
+        <div class="log-header" id="logToggle">
+          <span class="chevron" id="chevron">▶</span>
+          <span>操作日志</span>
+        </div>
+        <pre id="log" style="display:none;"></pre>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>数据概览</h3>
+      <div class="cards" id="stats"></div>
+    </section>
+
+    <section class="card">
+      <h3>热门视频列表</h3>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <label for="pageSize" style="margin:0;">每页显示</label>
+        <select id="pageSize" style="width:auto;">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th>频道</th>
+              <th>观看</th>
+              <th>点赞</th>
+              <th>评论</th>
+              <th>发布时间</th>
+            </tr>
+          </thead>
+          <tbody id="videoBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="prevPage" class="secondary">上一页</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage" class="secondary">下一页</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>可视化</h3>
+      <div class="charts">
+        <div id="chart1" class="chart"></div>
+        <div id="chart2" class="chart"></div>
+        <div id="chart3" class="chart"></div>
+        <div id="chart4" class="chart"></div>
+        <div id="chart5" class="chart"></div>
+        <div id="chart6" class="chart"></div>
+        <div id="chart7" class="chart"></div>
+        <div id="chart8" class="chart"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./assets/echarts.min.js"></script>
+  <script src="./assets/echarts-wordcloud.min.js"></script>
+  <script>
+    const LS_KEY = 'shorts_data';
+    const backendBase = 'http://127.0.0.1:5000';
+    const logBox = document.getElementById('log');
+    const flashBox = document.getElementById('flash');
+    const chevron = document.getElementById('chevron');
+    const logToggle = document.getElementById('logToggle');
+    let logVisible = false;
+    let cachedData = [];
+    let charts = {};
+    let pagination = { page: 1, pageSize: 10 };
+
+        function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      logBox.textContent += `[${time}] ${msg}\n`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function flash(msg) {
+      flashBox.textContent = msg;
+      flashBox.style.display = 'block';
+      setTimeout(() => { flashBox.style.display = 'none'; }, 3000);
+    }
+
+    function toggleLog() {
+      logVisible = !logVisible;
+      logBox.style.display = logVisible ? 'block' : 'none';
+      chevron.classList.toggle('open', logVisible);
+    }
+
+function saveToLocalStorage(data) {
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      log(`已写入 localStorage，共 ${data.length} 条`);
+    }
+
+    function loadFromLocalStorage() {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return [];
+      try { return JSON.parse(raw); } catch { return []; }
+    }
+
+    function renderStats(data) {
+      const total = data.length;
+      const views = data.reduce((s,v)=> s + (+v.view_count || 0), 0);
+      const likes = data.reduce((s,v)=> s + (+v.like_count || 0), 0);
+      const comments = data.reduce((s,v)=> s + (+v.comment_count || 0), 0);
+      const avgView = total ? Math.round(views/total) : 0;
+      const avgLike = total ? Math.round(likes/total) : 0;
+      const cards = [
+        ['视频总数', total],
+        ['观看总数', views.toLocaleString()],
+        ['点赞总数', likes.toLocaleString()],
+        ['评论总数', comments.toLocaleString()],
+        ['平均观看', avgView.toLocaleString()],
+        ['平均点赞', avgLike.toLocaleString()]
+      ];
+      document.getElementById('stats').innerHTML = cards.map(([t,v]) => `
+        <div class="stat"><div class="label">${t}</div><div class="value">${v}</div></div>
+      `).join('');
+    }
+
+    function groupCount(arr, keyFn) {
+      const m = new Map();
+      arr.forEach(item => {
+        const k = keyFn(item);
+        if (!k) return;
+        m.set(k, (m.get(k) || 0) + 1);
+      });
+      return [...m.entries()].sort((a,b)=> b[1]-a[1]);
+    }
+
+    function renderCharts(data) {
+      const viewSum = data.reduce((s,v)=> s + (+v.view_count || 0), 0);
+      const likeSum = data.reduce((s,v)=> s + (+v.like_count || 0), 0);
+      const commentSum = data.reduce((s,v)=> s + (+v.comment_count || 0), 0);
+
+      const durations = [0,15,30,45,60,90];
+      const durationBuckets = durations.slice(0,-1).map((start,i) => {
+        const end = durations[i+1];
+        const count = data.filter(v => {
+          const d = +v.duration_seconds || 0;
+          return d >= start && d < end;
+        }).length;
+        return count;
+      });
+
+      const scatter = data.map(v => [+v.view_count || 0, +v.like_count || 0]);
+
+      const byMonth = groupCount(data, v => (v.published_at || '').slice(0,7));
+
+      const channelCounts = (() => {
+        const map = new Map();
+        data.forEach(v => {
+          const key = v.channel_id || v.channel_title || '未知';
+          const title = v.channel_title || '未知';
+          const count = map.get(key)?.count || 0;
+          map.set(key, { title, channel_id: v.channel_id, count: count + 1 });
+        });
+        return [...map.entries()].map(([,val])=>val).sort((a,b)=> b.count - a.count).slice(0,10);
+      })();
+
+      const tagCounts = (() => {
+        const m = new Map();
+        data.forEach(v => (v.tags || []).forEach(t => m.set(t, (m.get(t)||0)+1)));
+        return [...m.entries()].map(([name,value])=>({name,value}));
+      })();
+
+      const viewBuckets = (() => {
+        const buckets = [
+          { label: '<1k', min:0, max:1000 },
+          { label: '1k-10k', min:1000, max:10000 },
+          { label: '10k-100k', min:10000, max:100000 },
+          { label: '100k-1M', min:100000, max:1000000 },
+          { label: '>=1M', min:1000000, max: Infinity },
+        ];
+        return buckets.map(b => ({ name: b.label, value: data.filter(v => {
+          const views = +v.view_count || 0;
+          return views >= b.min && views < b.max;
+        }).length }));
+      })();
+
+      const radarMax = Math.max(
+        viewSum, likeSum * 100, commentSum * 100
+      ) || 1;
+
+      const chartConfigs = [
+        {
+          id: 'chart1',
+          option: {
+            darkMode: true,
+            title: { text: '互动分布', textStyle:{color:'#e2e8f0'} },
+            tooltip: {},
+            xAxis: { type:'category', data:['观看','点赞','评论'] },
+            yAxis: { type:'value' },
+            series: [{ type:'bar', data:[viewSum, likeSum, commentSum], itemStyle:{color:'#22c55e'} }]
+          }
+        },
+        {
+          id: 'chart2',
+          option: {
+            darkMode:true,
+            title:{ text:'时长分布(秒)', textStyle:{color:'#e2e8f0'} },
+            tooltip:{},
+            xAxis:{ type:'category', data:['0-15','15-30','30-45','45-60','60-90'] },
+            yAxis:{ type:'value' },
+            series:[{ type:'bar', data: durationBuckets, itemStyle:{color:'#38bdf8'} }]
+          }
+        },
+        {
+          id: 'chart3',
+          option: {
+            darkMode:true,
+            title:{ text:'观看-点赞散点', textStyle:{color:'#e2e8f0'} },
+            tooltip:{ trigger:'item' },
+            xAxis:{ type:'value', name:'观看' },
+            yAxis:{ type:'value', name:'点赞' },
+            series:[{ type:'scatter', data: scatter, symbolSize: 6, itemStyle:{color:'#a855f7'} }]
+          }
+        },
+        {
+          id: 'chart4',
+          option: {
+            darkMode:true,
+            title:{ text:'发布时间趋势', textStyle:{color:'#e2e8f0'} },
+            tooltip:{ trigger:'axis' },
+            xAxis:{ type:'category', data: byMonth.map(d=>d[0]) },
+            yAxis:{ type:'value' },
+            series:[{ type:'line', data: byMonth.map(d=>d[1]), smooth:true, areaStyle:{} }]
+          },
+          onClick: params => {
+            if (params.name) {
+              window.open(`analytics_detail.html?date=${params.name}`, '_blank');
+            }
+          }
+        },
+        {
+          id: 'chart5',
+          option: {
+            darkMode:true,
+            title:{ text:'热门频道', textStyle:{color:'#e2e8f0'} },
+            tooltip:{},
+            xAxis:{ type:'value' },
+            yAxis:{ type:'category', data: channelCounts.map(c=>c.title).reverse() },
+            series:[{ type:'bar', data: channelCounts.map(c=>c.count).reverse(), itemStyle:{color:'#f97316'} }]
+          },
+          onClick: params => {
+            const index = channelCounts.length - 1 - params.dataIndex;
+            const item = channelCounts[index];
+            if (item && item.channel_id) {
+              window.open(`https://www.youtube.com/channel/${item.channel_id}`, '_blank');
+            }
+          }
+        },
+        {
+          id: 'chart6',
+          option: {
+            darkMode:true,
+            title:{ text:'标签词云', textStyle:{color:'#e2e8f0'} },
+            series:[{
+              type:'wordCloud',
+              shape:'circle',
+              sizeRange:[12,42],
+              rotationRange:[0,0],
+              textStyle:{ color: () => `hsl(${Math.random()*360},70%,60%)` },
+              data: tagCounts.length ? tagCounts : [{name:'暂无标签', value:1}]
+            }]
+          }
+        },
+        {
+          id: 'chart7',
+          option: {
+            darkMode:true,
+            title:{ text:'参与度雷达', textStyle:{color:'#e2e8f0'} },
+            tooltip:{},
+            radar:{
+              indicator:[
+                { name:'观看', max: radarMax },
+                { name:'点赞', max: radarMax },
+                { name:'评论', max: radarMax }
+              ]
+            },
+            series:[{ type:'radar', data:[{ value:[viewSum, likeSum, commentSum], areaStyle:{color:'rgba(34,197,94,0.3)'} }] }]
+          }
+        },
+        {
+          id: 'chart8',
+          option: {
+            darkMode:true,
+            title:{ text:'观看分布', textStyle:{color:'#e2e8f0'} },
+            tooltip:{ trigger:'item' },
+            series:[{ type:'pie', radius:['30%','70%'], data: viewBuckets }]
+          }
+        },
+      ];
+
+      chartConfigs.forEach(cfg => {
+        const dom = document.getElementById(cfg.id);
+        if (!dom) return;
+        if (charts[cfg.id]) {
+          charts[cfg.id].dispose();
+        }
+        const inst = echarts.init(dom, null, { renderer:'canvas' });
+        inst.setOption(cfg.option);
+        if (cfg.onClick) inst.on('click', cfg.onClick);
+        charts[cfg.id] = inst;
+      });
+    }
+
+    function renderTable(data) {
+      const start = (pagination.page - 1) * pagination.pageSize;
+      const end = start + pagination.pageSize;
+      const slice = data.slice(start, end);
+      const tbody = document.getElementById('videoBody');
+      tbody.innerHTML = slice.map(item => {
+        const url = item.video_id ? `https://www.youtube.com/watch?v=${item.video_id}` : null;
+        const titleCell = url
+          ? `<a class="link" href="${url}" target="_blank" rel="noopener noreferrer">${item.title || ''}</a>`
+          : (item.title || '');
+        return `
+        <tr>
+          <td>${titleCell}</td>
+          <td>${item.channel_title || ''}</td>
+          <td>${(+item.view_count || 0).toLocaleString()}</td>
+          <td>${(+item.like_count || 0).toLocaleString()}</td>
+          <td>${(+item.comment_count || 0).toLocaleString()}</td>
+          <td>${(item.published_at || '').replace('T',' ').replace('Z','')}</td>
+        </tr>
+        `;
+      }).join('');
+      const totalPages = Math.max(1, Math.ceil(data.length / pagination.pageSize));
+      document.getElementById('pageInfo').textContent = `第 ${pagination.page} / ${totalPages} 页`;
+      document.getElementById('prevPage').disabled = pagination.page <= 1;
+      document.getElementById('nextPage').disabled = pagination.page >= totalPages;
+    }
+
+    function updateAll(data) {
+      const sorted = [...data].sort((a,b) => (b.view_count||0) - (a.view_count||0));
+      cachedData = sorted;
+      renderStats(sorted);
+      renderCharts(sorted);
+      renderTable(sorted);
+    }
+
+    async function triggerCollect() {
+      const keywords = document.getElementById('keywords').value.trim();
+      const max_results = parseInt(document.getElementById('maxResults').value, 10) || 100;
+      const daysRaw = document.getElementById('days').value;
+      const days = daysRaw === '' ? null : Number(daysRaw);
+      if (!keywords) { log('请输入关键词'); return; }
+      log(`开始采集：${keywords}, max=${max_results}, days=${days ?? 'all'}`);
+      try {
+        const resp = await fetch(`${backendBase}/collect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keywords, max_results, days })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          log(`采集失败：${data.error || resp.status}`);
+          return;
+        }
+        log(`采集完成：共 ${data.total} 条，已写入 ${data.data_file}`);
+        await loadData();
+      } catch (err) {
+        log(`请求失败：${err}`);
+      }
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('./shorts.json');
+        if (!res.ok) { log('读取 shorts.json 失败'); return false; }
+        const json = await res.json();
+        saveToLocalStorage(json);
+        updateAll(json);
+        flash('采集成功，数据已刷新');
+        return true;
+      } catch (err) {
+        log(`加载失败：${err}`);
+        return false;
+      }
+    }
+
+    function exportReport() {
+      const data = cachedData;
+      if (!data.length) { log('无数据可导出'); return; }
+      const total = data.length;
+      const views = data.reduce((s,v)=> s + (+v.view_count || 0), 0);
+      const likes = data.reduce((s,v)=> s + (+v.like_count || 0), 0);
+      const comments = data.reduce((s,v)=> s + (+v.comment_count || 0), 0);
+      const stats = { total, views, likes, comments };
+      const topVideos = [...data].sort((a,b)=> (b.view_count||0) - (a.view_count||0)).slice(0,20);
+      const topChannels = groupCount(data, v => v.channel_title || '未知').slice(0,10)
+        .map(([channel,count]) => ({ channel, count }));
+      const tagMap = new Map();
+      data.forEach(v => (v.tags||[]).forEach(t => tagMap.set(t, (tagMap.get(t)||0)+1)));
+      const topTags = [...tagMap.entries()].sort((a,b)=> b[1]-a[1]).slice(0,20)
+        .map(([tag,count]) => ({ tag, count }));
+      const payload = { generated_at: new Date().toISOString(), stats, topVideos, topChannels, topTags };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'report.json'; a.click();
+      URL.revokeObjectURL(url);
+      log('已导出 report.json');
+    }
+
+    document.getElementById('collectBtn').onclick = triggerCollect;
+    document.getElementById('exportBtn').onclick = exportReport;
+    document.getElementById('clearLog').onclick = () => { logBox.textContent = ''; };
+    document.getElementById('logToggle').onclick = toggleLog;
+    document.getElementById('prevPage').onclick = () => { if (pagination.page > 1) { pagination.page--; renderTable(cachedData); } };
+    document.getElementById('nextPage').onclick = () => {
+      const totalPages = Math.max(1, Math.ceil(cachedData.length / pagination.pageSize));
+      if (pagination.page < totalPages) { pagination.page++; renderTable(cachedData); }
+    };
+    document.getElementById('pageSize').onchange = (e) => {
+      pagination.pageSize = Number(e.target.value);
+      pagination.page = 1;
+      renderTable(cachedData);
+    };
+
+    (function init() {
+      const local = loadFromLocalStorage();
+      if (local.length) {
+        log(`已从 localStorage 读取 ${local.length} 条`);
+        updateAll(local);
+      } else {
+        log('localStorage 无数据，可通过采集生成数据，采集成功后自动加载');
+      }
+    })();
+  </script>
+</body>
+</html>

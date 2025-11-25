@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+.DS_Store
+.venv/
+env/
+*.log
+*.pyc
+*.pyo
+*.pyd
+*.env
+shorts.json
+shorts.preview.json
+api_key.txt

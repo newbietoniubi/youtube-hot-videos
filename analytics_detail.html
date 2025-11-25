@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>月度详情</title>
+  <style>
+    body { margin:0; font-family: Arial,sans-serif; background:#0f172a; color:#e2e8f0; padding:16px; }
+    .card { background:#1f2937; border-radius:10px; padding:14px; border:1px solid #334155; box-shadow:0 4px 10px rgba(0,0,0,.25); }
+    h2 { margin:0 0 12px 0; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin:12px 0; }
+    .stat { padding:10px; border-radius:8px; background:#111827; border:1px solid #334155; }
+    .label { color:#cbd5e1; font-size:13px; }
+    .value { font-size:20px; font-weight:700; margin-top:4px; }
+    table { width:100%; border-collapse:collapse; color:#e2e8f0; margin-top:12px; }
+    th, td { padding:8px; border-bottom:1px solid #334155; text-align:left; }
+    th { color:#cbd5e1; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 id="title">月度详情</h2>
+    <div class="stats" id="stats"></div>
+    <div id="chart" style="width:100%;height:360px;"></div>
+    <div id="info"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>标题</th>
+          <th>频道</th>
+          <th>观看</th>
+          <th>点赞</th>
+          <th>评论</th>
+          <th>发布时间</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <script src="./assets/echarts.min.js"></script>
+  <script>
+    const LS_KEY = 'shorts_data';
+    const params = new URLSearchParams(location.search);
+    const target = params.get('date');
+    const raw = localStorage.getItem(LS_KEY);
+    let data = [];
+    if (raw) {
+      try { data = JSON.parse(raw); } catch { data = []; }
+    }
+    if (target) {
+      data = data.filter(v => (v.published_at || '').slice(0,7) === target);
+    }
+    document.getElementById('title').textContent = `YouTube Shorts 月度详情 - ${target || '未指定'}`;
+    document.getElementById('info').textContent = `本月视频数：${data.length}`;
+
+    function renderStats(list) {
+      const total = list.length;
+      const views = list.reduce((s,v)=> s + (+v.view_count || 0), 0);
+      const likes = list.reduce((s,v)=> s + (+v.like_count || 0), 0);
+      const comments = list.reduce((s,v)=> s + (+v.comment_count || 0), 0);
+      const cards = [
+        ['视频总数', total],
+        ['观看总数', views.toLocaleString()],
+        ['点赞总数', likes.toLocaleString()],
+        ['评论总数', comments.toLocaleString()],
+      ];
+      document.getElementById('stats').innerHTML = cards.map(([t,v]) => `
+        <div class="stat"><div class="label">${t}</div><div class="value">${v}</div></div>
+      `).join('');
+    }
+
+    function renderChart(list) {
+      const dom = document.getElementById('chart');
+      const inst = echarts.init(dom, null, { renderer:'canvas' });
+      inst.setOption({
+        darkMode:true,
+        title:{ text:'观看-点赞散点', textStyle:{color:'#e2e8f0'} },
+        tooltip:{ trigger:'item' },
+        xAxis:{ type:'value', name:'观看' },
+        yAxis:{ type:'value', name:'点赞' },
+        series:[{ type:'scatter', data: list.map(v=>[+v.view_count||0, +v.like_count||0]), symbolSize:6, itemStyle:{color:'#38bdf8'} }]
+      });
+    }
+
+    function renderTable(list) {
+      document.getElementById('tbody').innerHTML = list.map(v => `
+        <tr>
+          <td>${v.title || ''}</td>
+          <td>${v.channel_title || ''}</td>
+          <td>${(+v.view_count || 0).toLocaleString()}</td>
+          <td>${(+v.like_count || 0).toLocaleString()}</td>
+          <td>${(+v.comment_count || 0).toLocaleString()}</td>
+          <td>${(v.published_at || '').replace('T',' ').replace('Z','')}</td>
+        </tr>
+      `).join('');
+    }
+
+    renderStats(data);
+    renderChart(data);
+    renderTable(data);
+  </script>
+</body>
+</html>
