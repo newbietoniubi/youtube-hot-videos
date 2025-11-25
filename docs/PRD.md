@@ -12,16 +12,16 @@
 ### 3.1 数据采集（本地后端 API）
 - 形态：轻量本地后端（Python Flask/FastAPI 或 Node/Express），仅本机可访问。
 - API Key：仅存放于后端 `.env`（或环境变量），不写入前端代码，前端不可见。
-- 输入参数（由前端调用本地 API）：关键词、最大结果数（50-10000）、可选“最近 N 天”过滤（留空=全量）。
+- 输入参数（由前端调用本地 API）：关键词（必填）、最大结果数（50-10000）、可选“最近 N 天”过滤（留空=全量，默认 7 天）。
 - Shorts 过滤：后端限定 `duration_seconds <= 60`。
 - API 时间过滤：`publishedAfter` 由“最近 N 天”计算，传递给 YouTube Data API v3。
 - 排序：采集结果按观看次数降序排序后保存（热门优先）。
 - 结果输出：后端写 `shorts.json`（全量）与 `shorts.preview.json`（前 3 条）到项目目录；返回采集摘要。
-- 错误提示：API Key 缺失/无效、配额不足、网络错误、无结果；前端展示。
+- 错误提示：API Key 缺失/无效、配额不足、网络错误、无结果、缺少关键词；前端展示。
 
 ### 3.2 数据分析仪表板（HTML，本地文件）
-- 数据来源：优先读取浏览器 `localStorage`；若无则加载同目录 `shorts.json` 并写入 `localStorage`。可提供“触发采集”按钮调用本地后端 `/collect`。
-- 采集成功后自动将新数据写入 localStorage 并渲染（无需手动加载按钮）。
+- 数据来源：优先读取浏览器 `localStorage`；若无则加载同目录 `shorts.json` 并写入 `localStorage`。提供“开始采集”按钮调用本地后端 `/collect`。
+- 采集成功后自动将新数据写入 localStorage 并渲染。
 - 统计卡：视频总数、观看总数、点赞总数、评论总数、平均观看、平均点赞。
 - 图表（先不指定图表库，后续确认）：互动分布、时长分布、观看-点赞散点、发布时间趋势（按月）、热门频道、标签词云、参与度雷达、观看分布饼图。
 - 时间轴交互：点击月份跳转到 `analytics_detail.html?date=YYYY-MM`，仅显示该月数据。
@@ -35,7 +35,7 @@
 - 通过 URL 查询参数 `date=YYYY-MM` 过滤 `localStorage` 中数据，渲染月度专属统计与图表。
 
 ### 3.4 配置与持久化
-- API Key 后端环境变量/.env 存储，前端不可见。
+- API Key 后端环境变量/.env 存储（本地文件，不提交版本库），前端不可见。
 - 数据本地存储：`shorts.json`、`shorts.preview.json` 与应用同目录；浏览器侧 `localStorage` 用于自动加载。
 
 ## 4. 非功能需求
@@ -68,7 +68,7 @@
 5) 月度详情：在发布时间趋势图点击月份 → 新标签页 `analytics_detail.html?date=YYYY-MM` → 按月过滤数据并渲染。
 
 ## 7. 文件与目录（建议）
-- `backend/`：本地后端（Python Flask/FastAPI 或 Node/Express），包含 `.env.example`、依赖文件。
+- `backend/`：本地后端（Python Flask/FastAPI 或 Node/Express），包含依赖文件；`.env` 本地存放 API Key（不入库）。
 - `shorts.json` / `shorts.preview.json` / `api_key.txt`（若用 Python 存储 Key 编码）：运行产物。
 - `index.html`：总览仪表板。
 - `analytics_detail.html`：月度详情页。
@@ -85,7 +85,7 @@
 - 网络限制 → 本地化图表库和字体资源，确保离线可用；采集阶段需外网访问 YouTube API。
 
 ## 10. 开发计划
-- 环境/骨架：确定后端栈（默认 Python+Flask），初始化虚拟环境，创建 `backend/`，编写 `.env.example`（含 API_KEY），列出依赖。
+- 环境/骨架：确定后端栈（默认 Python+Flask），初始化虚拟环境，创建 `backend/`，准备 `.env`（本地填写 API_KEY），列出依赖。
 - 后端实现：编写 `/collect` 接口，接收关键词/最大数/最近 N 天，调用 YouTube Data API v3，执行短视频过滤（<=60s）和数量上限，写入 `shorts.json`/`shorts.preview.json`，返回摘要与错误信息。
 - 前端对接：在 `index.html` 添加“触发采集”表单/按钮，调用本地 `/collect`，成功后写入 localStorage 并触发渲染。
 - 仪表板完善：按 PRD 补齐统计卡、图表占位、分页、月度详情跳转；图表库待定但预留挂载点。

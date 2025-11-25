@@ -40,6 +40,13 @@
     .chevron.open { transform: rotate(90deg); }
     #log { max-height: 220px; }
     .banner { display:none; margin-top:10px; padding:10px; border-radius:8px; background:#0ea5e9; color:#0b1220; font-weight:700; }
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .video-card { background: #111827; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,.25); display: flex; flex-direction: column; }
+    .video-thumb img { width: 100%; display: block; }
+    .video-body { padding: 10px; display: grid; gap: 6px; }
+    .video-title { font-weight: 700; line-height: 1.4; color: #e2e8f0; text-decoration: none; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em; }
+    .video-title:hover { text-decoration: underline; color: #38bdf8; }
+    .video-meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; }
   </style>
 </head>
 <body>
@@ -91,27 +98,13 @@
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <label for="pageSize" style="margin:0;">每页显示</label>
         <select id="pageSize" style="width:auto;">
-          <option value="10">10</option>
+          <option value="12" selected>12</option>
           <option value="20">20</option>
           <option value="50">50</option>
           <option value="100">100</option>
         </select>
       </div>
-      <div style="overflow:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>标题</th>
-              <th>频道</th>
-              <th>观看</th>
-              <th>点赞</th>
-              <th>评论</th>
-              <th>发布时间</th>
-            </tr>
-          </thead>
-          <tbody id="videoBody"></tbody>
-        </table>
-      </div>
+      <div class="video-grid" id="videoCards"></div>
       <div class="pagination">
         <button id="prevPage" class="secondary">上一页</button>
         <span id="pageInfo"></span>
@@ -139,6 +132,9 @@
   <script>
     const LS_KEY = 'shorts_data';
     const backendBase = 'http://127.0.0.1:5000';
+    const DEFAULT_KEYWORD = "";
+    const DEFAULT_MAX = 50;
+    const DEFAULT_DAYS = 7;
     const logBox = document.getElementById('log');
     const flashBox = document.getElementById('flash');
     const chevron = document.getElementById('chevron');
@@ -146,7 +142,7 @@
     let logVisible = false;
     let cachedData = [];
     let charts = {};
-    let pagination = { page: 1, pageSize: 10 };
+    let pagination = { page: 1, pageSize: 12 };
 
         function log(msg) {
       const time = new Date().toLocaleTimeString();
@@ -164,6 +160,14 @@
       logVisible = !logVisible;
       logBox.style.display = logVisible ? 'block' : 'none';
       chevron.classList.toggle('open', logVisible);
+    }
+
+
+    function fmtCompact(n) {
+      const num = Number(n) || 0;
+      if (num >= 1_000_000) return (num/1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (num >= 1_000) return (num/1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+      return num.toString();
     }
 
 function saveToLocalStorage(data) {
@@ -186,11 +190,11 @@ function saveToLocalStorage(data) {
       const avgLike = total ? Math.round(likes/total) : 0;
       const cards = [
         ['视频总数', total],
-        ['观看总数', views.toLocaleString()],
-        ['点赞总数', likes.toLocaleString()],
-        ['评论总数', comments.toLocaleString()],
-        ['平均观看', avgView.toLocaleString()],
-        ['平均点赞', avgLike.toLocaleString()]
+        ['观看总数', fmtCompact(views)],
+        ['点赞总数', fmtCompact(likes)],
+        ['评论总数', fmtCompact(comments)],
+        ['平均观看', fmtCompact(avgView)],
+        ['平均点赞', fmtCompact(avgLike)]
       ];
       document.getElementById('stats').innerHTML = cards.map(([t,v]) => `
         <div class="stat"><div class="label">${t}</div><div class="value">${v}</div></div>
@@ -235,13 +239,13 @@ function saveToLocalStorage(data) {
           map.set(key, { title, channel_id: v.channel_id, count: count + 1 });
         });
         return [...map.entries()].map(([,val])=>val).sort((a,b)=> b.count - a.count).slice(0,10);
-      })();
+      })();;
 
       const tagCounts = (() => {
         const m = new Map();
         data.forEach(v => (v.tags || []).forEach(t => m.set(t, (m.get(t)||0)+1)));
         return [...m.entries()].map(([name,value])=>({name,value}));
-      })();
+      })();;
 
       const viewBuckets = (() => {
         const buckets = [
@@ -255,7 +259,7 @@ function saveToLocalStorage(data) {
           const views = +v.view_count || 0;
           return views >= b.min && views < b.max;
         }).length }));
-      })();
+      })();;
 
       const radarMax = Math.max(
         viewSum, likeSum * 100, commentSum * 100
@@ -384,26 +388,30 @@ function saveToLocalStorage(data) {
       });
     }
 
-    function renderTable(data) {
+    function renderCards(data) {
       const start = (pagination.page - 1) * pagination.pageSize;
       const end = start + pagination.pageSize;
       const slice = data.slice(start, end);
-      const tbody = document.getElementById('videoBody');
-      tbody.innerHTML = slice.map(item => {
-        const url = item.video_id ? `https://www.youtube.com/watch?v=${item.video_id}` : null;
-        const titleCell = url
-          ? `<a class="link" href="${url}" target="_blank" rel="noopener noreferrer">${item.title || ''}</a>`
-          : (item.title || '');
+      const container = document.getElementById('videoCards');
+      container.innerHTML = slice.map(item => {
+        const url = item.video_id ? `https://www.youtube.com/watch?v=${item.video_id}` : '#';
+        const thumb = item.video_id ? `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg` : '';
+        const views = fmtCompact(item.view_count);
+        const likes = fmtCompact(item.like_count);
+        const comments = fmtCompact(item.comment_count);
+        const published = (item.published_at || '').replace('T',' ').replace('Z','');
         return `
-        <tr>
-          <td>${titleCell}</td>
-          <td>${item.channel_title || ''}</td>
-          <td>${(+item.view_count || 0).toLocaleString()}</td>
-          <td>${(+item.like_count || 0).toLocaleString()}</td>
-          <td>${(+item.comment_count || 0).toLocaleString()}</td>
-          <td>${(item.published_at || '').replace('T',' ').replace('Z','')}</td>
-        </tr>
-        `;
+        <div class="video-card">
+          <a class="video-thumb" href="${url}" target="_blank" rel="noopener noreferrer">
+            <img src="${thumb}" alt="${item.title || ''}">
+          </a>
+          <div class="video-body">
+            <a class="video-title" href="${url}" target="_blank" rel="noopener noreferrer">${item.title || ''}</a>
+            <div class="video-meta">频道：${item.channel_title || ''}</div>
+            <div class="video-meta">👁️ ${views} · 👍 ${likes} · 💬 ${comments}</div>
+            <div class="video-meta">发布时间：${published}</div>
+          </div>
+        </div>`;
       }).join('');
       const totalPages = Math.max(1, Math.ceil(data.length / pagination.pageSize));
       document.getElementById('pageInfo').textContent = `第 ${pagination.page} / ${totalPages} 页`;
@@ -411,21 +419,22 @@ function saveToLocalStorage(data) {
       document.getElementById('nextPage').disabled = pagination.page >= totalPages;
     }
 
-    function updateAll(data) {
+function updateAll(data) {
       const sorted = [...data].sort((a,b) => (b.view_count||0) - (a.view_count||0));
       cachedData = sorted;
       renderStats(sorted);
       renderCharts(sorted);
-      renderTable(sorted);
+      renderCards(sorted);
     }
-
-    async function triggerCollect() {
-      const keywords = document.getElementById('keywords').value.trim();
-      const max_results = parseInt(document.getElementById('maxResults').value, 10) || 100;
-      const daysRaw = document.getElementById('days').value;
-      const days = daysRaw === '' ? null : Number(daysRaw);
+    async function triggerCollect(isAuto = false) {
+      const keywordsInput = document.getElementById('keywords');
+      const daysInput = document.getElementById('days');
+      const keywords = keywordsInput.value.trim();
+      const max_results = parseInt(document.getElementById('maxResults').value, 10) || DEFAULT_MAX;
+      const daysRaw = daysInput.value;
+      const days = daysRaw === '' ? DEFAULT_DAYS : Number(daysRaw);
       if (!keywords) { log('请输入关键词'); return; }
-      log(`开始采集：${keywords}, max=${max_results}, days=${days ?? 'all'}`);
+      log(`开始采集：${keywords}, max=${max_results}, days=${days}`);
       try {
         const resp = await fetch(`${backendBase}/collect`, {
           method: 'POST',
@@ -487,15 +496,15 @@ function saveToLocalStorage(data) {
     document.getElementById('exportBtn').onclick = exportReport;
     document.getElementById('clearLog').onclick = () => { logBox.textContent = ''; };
     document.getElementById('logToggle').onclick = toggleLog;
-    document.getElementById('prevPage').onclick = () => { if (pagination.page > 1) { pagination.page--; renderTable(cachedData); } };
+    document.getElementById('prevPage').onclick = () => { if (pagination.page > 1) { pagination.page--; renderCards(cachedData); } };
     document.getElementById('nextPage').onclick = () => {
       const totalPages = Math.max(1, Math.ceil(cachedData.length / pagination.pageSize));
-      if (pagination.page < totalPages) { pagination.page++; renderTable(cachedData); }
+      if (pagination.page < totalPages) { pagination.page++; renderCards(cachedData); }
     };
     document.getElementById('pageSize').onchange = (e) => {
       pagination.pageSize = Number(e.target.value);
       pagination.page = 1;
-      renderTable(cachedData);
+      renderCards(cachedData);
     };
 
     (function init() {
@@ -504,9 +513,9 @@ function saveToLocalStorage(data) {
         log(`已从 localStorage 读取 ${local.length} 条`);
         updateAll(local);
       } else {
-        log('localStorage 无数据，可通过采集生成数据，采集成功后自动加载');
+        log('localStorage 无数据，请输入关键词采集');
       }
-    })();
+    })();;
   </script>
 </body>
 </html>
