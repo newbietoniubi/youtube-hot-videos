@@ -221,13 +221,29 @@ def save_data(records: List[Dict]) -> Dict:
 def collect():
     payload = request.get_json(silent=True) or {}
     keywords = (payload.get("keywords") or "").strip()
+    keyword_list_raw = payload.get("keyword_list") or []
+    if isinstance(keyword_list_raw, str):
+        keyword_list_raw = [keyword_list_raw]
+    keyword_list = [k.strip() for k in keyword_list_raw if isinstance(k, str) and k.strip()]
+    deduped: List[str] = []
+    seen = set()
+    for kw in keyword_list:
+        key = kw.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(kw)
+    keyword_list = deduped
+
     max_results = int(payload.get("max_results") or 20)
     days = payload.get("days")
     days_int = int(days) if days not in (None, "",) else 7
     region_raw = (payload.get("region") or "").strip().upper()
     region = None if not region_raw or region_raw == "ALL" else region_raw
 
-    if not keywords:
+    if not keyword_list and keywords:
+        keyword_list = [keywords]
+    if not keyword_list:
         return jsonify({"error": "keywords is required"}), 400
     if max_results < 1 or max_results > 10000:
         return jsonify({"error": "max_results must be between 1 and 10000"}), 400
@@ -235,9 +251,19 @@ def collect():
         return jsonify({"error": "days must be non-negative"}), 400
 
     try:
-        records = fetch_shorts(keywords, max_results, days_int, region)
+        merged: Dict[str, Dict] = {}
+        for kw in keyword_list:
+            part = fetch_shorts(kw, max_results, days_int, region)
+            for item in part:
+                vid = item.get("video_id")
+                if not vid:
+                    continue
+                existing = merged.get(vid)
+                if not existing or item.get("view_count", 0) > existing.get("view_count", 0):
+                    merged[vid] = item
+        records = sorted(merged.values(), key=lambda x: x.get("view_count", 0), reverse=True)[:max_results]
         summary = save_data(records)
-        return jsonify({"total": len(records), **summary})
+        return jsonify({"total": len(records), "keywords_used": keyword_list, **summary})
     except Exception as exc:  # broad to surface API errors
         return jsonify({"error": str(exc)}), 500
 

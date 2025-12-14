@@ -27,6 +27,9 @@
     .stat { padding: 12px; border-radius: 10px; background: #111827; border: 1px solid var(--border); }
     .stat .label { color: var(--muted); font-size: 13px; }
     .stat .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .quick-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .pill { padding:6px 10px; border-radius:999px; background: #111827; border:1px solid var(--border); color: var(--text); cursor:pointer; font-size:13px; }
+    .pill:hover { border-color: var(--primary); color: var(--primary); }
     .charts { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
     .chart { height: 320px; border-radius: 12px; border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; color: var(--text); }
@@ -78,6 +81,7 @@
         <button id="collectBtn">🚀 开始采集</button>
         <button id="clearLog" class="secondary">清空日志</button>
       </div>
+      <div class="quick-pills" id="quickPills"></div>
       <div id="flash" class="banner"></div>
       <div style="margin-top:12px;">
         <div class="log-header" id="logToggle">
@@ -135,6 +139,9 @@
     const DEFAULT_KEYWORD = "";
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 7;
+    const QUICK_PRESETS = [
+      { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
+    ];
     const logBox = document.getElementById('log');
     const flashBox = document.getElementById('flash');
     const chevron = document.getElementById('chevron');
@@ -426,20 +433,27 @@ function updateAll(data) {
       renderCharts(sorted);
       renderCards(sorted);
     }
-    async function triggerCollect(isAuto = false) {
+    async function triggerCollect(isAuto = false, keywordList = null) {
       const keywordsInput = document.getElementById('keywords');
       const daysInput = document.getElementById('days');
       const keywords = keywordsInput.value.trim();
       const max_results = parseInt(document.getElementById('maxResults').value, 10) || DEFAULT_MAX;
       const daysRaw = daysInput.value;
       const days = daysRaw === '' ? DEFAULT_DAYS : Number(daysRaw);
-      if (!keywords) { log('请输入关键词'); return; }
-      log(`开始采集：${keywords}, max=${max_results}, days=${days}`);
+      const kwList = Array.isArray(keywordList) && keywordList.length ? keywordList : (keywords ? [keywords] : []);
+      if (!kwList.length) { log('请输入关键词'); return; }
+      const payload = { max_results, days };
+      if (Array.isArray(keywordList) && keywordList.length) {
+        payload.keyword_list = keywordList;
+      } else {
+        payload.keywords = keywords;
+      }
+      log(`开始采集：${kwList.join(' / ')}, max=${max_results}, days=${days}`);
       try {
         const resp = await fetch(`${backendBase}/collect`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ keywords, max_results, days })
+          body: JSON.stringify(payload)
         });
         const data = await resp.json();
         if (!resp.ok) {
@@ -492,6 +506,22 @@ function updateAll(data) {
       log('已导出 report.json');
     }
 
+    function renderQuickPills() {
+      const box = document.getElementById('quickPills');
+      if (!box) return;
+      box.innerHTML = QUICK_PRESETS.map((preset, idx) => `
+        <button class="pill" data-idx="${idx}">${preset.label}</button>
+      `).join('');
+      box.querySelectorAll('.pill').forEach(btn => {
+        btn.onclick = () => {
+          const preset = QUICK_PRESETS[Number(btn.dataset.idx)];
+          if (!preset) return;
+          document.getElementById('keywords').value = preset.keywords.join(' / ');
+          triggerCollect(false, preset.keywords);
+        };
+      });
+    }
+
     document.getElementById('collectBtn').onclick = triggerCollect;
     document.getElementById('exportBtn').onclick = exportReport;
     document.getElementById('clearLog').onclick = () => { logBox.textContent = ''; };
@@ -515,6 +545,7 @@ function updateAll(data) {
       } else {
         log('localStorage 无数据，请输入关键词采集');
       }
+      renderQuickPills();
     })();;
   </script>
 </body>
