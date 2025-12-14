@@ -121,7 +121,7 @@ def fetch_most_popular(max_results: int, days: int | None, region: str = "US") -
 
 
 
-def fetch_shorts(keywords: str, max_results: int, days: int | None, region: str = "US") -> List[Dict]:
+def fetch_shorts(keywords: str, max_results: int, days: int | None, region: str | None = None) -> List[Dict]:
     if not API_KEY:
         raise RuntimeError("API_KEY is not configured in environment")
 
@@ -140,6 +140,8 @@ def fetch_shorts(keywords: str, max_results: int, days: int | None, region: str 
             "order": "viewCount",
             "videoDuration": "short",
         }
+        if region:
+            search_params["regionCode"] = region
         if published_after:
             search_params["publishedAfter"] = published_after
         if page_token:
@@ -222,7 +224,8 @@ def collect():
     max_results = int(payload.get("max_results") or 100)
     days = payload.get("days")
     days_int = int(days) if days not in (None, "",) else 7
-    region = (payload.get("region") or "US").strip().upper()
+    region_raw = (payload.get("region") or "").strip().upper()
+    region = None if not region_raw or region_raw == "ALL" else region_raw
 
     if not keywords:
         return jsonify({"error": "keywords is required"}), 400
@@ -230,8 +233,6 @@ def collect():
         return jsonify({"error": "max_results must be between 1 and 10000"}), 400
     if days_int is not None and days_int < 0:
         return jsonify({"error": "days must be non-negative"}), 400
-    if not region:
-        region = "US"
 
     try:
         records = fetch_shorts(keywords, max_results, days_int, region)
