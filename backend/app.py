@@ -221,7 +221,7 @@ def save_data(records: List[Dict]) -> Dict:
 def collect():
     payload = request.get_json(silent=True) or {}
     keywords = (payload.get("keywords") or "").strip()
-    max_results = int(payload.get("max_results") or 100)
+    max_results = int(payload.get("max_results") or 20)
     days = payload.get("days")
     days_int = int(days) if days not in (None, "",) else 7
     region_raw = (payload.get("region") or "").strip().upper()
