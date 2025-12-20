@@ -30,6 +30,8 @@
     .quick-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .pill { padding:6px 10px; border-radius:999px; background: #111827; border:1px solid var(--border); color: var(--text); cursor:pointer; font-size:13px; }
     .pill:hover { border-color: var(--primary); color: var(--primary); }
+    .gear-spin { display:inline-block; animation: gearSpin 1s linear infinite; transform-origin: 50% 50%; }
+    @keyframes gearSpin { to { transform: rotate(360deg); } }
     .charts { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
     .chart { height: 320px; border-radius: 12px; border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; color: var(--text); }
@@ -42,7 +44,6 @@
     .chevron { transition: transform .2s; display:inline-block; }
     .chevron.open { transform: rotate(90deg); }
     #log { max-height: 220px; }
-    .banner { display:none; margin-top:10px; padding:10px; border-radius:8px; background:#0ea5e9; color:#0b1220; font-weight:700; }
     .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
     .video-card { background: #111827; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,.25); display: flex; flex-direction: column; }
     .video-thumb img { width: 100%; display: block; }
@@ -82,7 +83,6 @@
         <button id="clearLog" class="secondary">清空日志</button>
       </div>
       <div class="quick-pills" id="quickPills"></div>
-      <div id="flash" class="banner"></div>
       <div style="margin-top:12px;">
         <div class="log-header" id="logToggle">
           <span class="chevron" id="chevron">▶</span>
@@ -139,35 +139,35 @@
     const DEFAULT_KEYWORD = "";
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 7;
-    const QUICK_PRESETS = [
-      { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
-    ];
-    const logBox = document.getElementById('log');
-    const flashBox = document.getElementById('flash');
-    const chevron = document.getElementById('chevron');
-    const logToggle = document.getElementById('logToggle');
-    let logVisible = false;
-    let cachedData = [];
-    let charts = {};
-    let pagination = { page: 1, pageSize: 12 };
+	    const QUICK_PRESETS = [
+	      { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
+	    ];
+	    const logBox = document.getElementById('log');
+	    const chevron = document.getElementById('chevron');
+	    const logToggle = document.getElementById('logToggle');
+	    const collectBtn = document.getElementById('collectBtn');
+	    let logVisible = false;
+	    let cachedData = [];
+	    let charts = {};
+	    let pagination = { page: 1, pageSize: 12 };
 
-        function log(msg) {
-      const time = new Date().toLocaleTimeString();
-      logBox.textContent += `[${time}] ${msg}\n`;
-      logBox.scrollTop = logBox.scrollHeight;
-    }
+	        function log(msg) {
+	      const time = new Date().toLocaleTimeString();
+	      logBox.textContent += `[${time}] ${msg}\n`;
+	      logBox.scrollTop = logBox.scrollHeight;
+	    }
 
-    function flash(msg) {
-      flashBox.textContent = msg;
-      flashBox.style.display = 'block';
-      setTimeout(() => { flashBox.style.display = 'none'; }, 3000);
-    }
+	    function toggleLog() {
+	      logVisible = !logVisible;
+	      logBox.style.display = logVisible ? 'block' : 'none';
+	      chevron.classList.toggle('open', logVisible);
+	    }
 
-    function toggleLog() {
-      logVisible = !logVisible;
-      logBox.style.display = logVisible ? 'block' : 'none';
-      chevron.classList.toggle('open', logVisible);
-    }
+	    function setCollecting(loading) {
+	      if (!collectBtn) return;
+	      collectBtn.disabled = loading;
+	      collectBtn.innerHTML = loading ? '<span class="gear-spin">⚙️</span> 采集中...' : '🚀 开始采集';
+	    }
 
 
     function fmtCompact(n) {
@@ -433,7 +433,7 @@ function updateAll(data) {
       renderCharts(sorted);
       renderCards(sorted);
     }
-    async function triggerCollect(isAuto = false, keywordList = null) {
+	    async function triggerCollect(isAuto = false, keywordList = null) {
       const keywordsInput = document.getElementById('keywords');
       const daysInput = document.getElementById('days');
       const keywords = keywordsInput.value.trim();
@@ -448,39 +448,41 @@ function updateAll(data) {
       } else {
         payload.keywords = keywords;
       }
-      log(`开始采集：${kwList.join(' / ')}, max=${max_results}, days=${days}`);
-      try {
-        const resp = await fetch(`${backendBase}/collect`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+	      log(`开始采集：${kwList.join(' / ')}, max=${max_results}, days=${days}`);
+	      try {
+	        setCollecting(true);
+	        const resp = await fetch(`${backendBase}/collect`, {
+	          method: 'POST',
+	          headers: { 'Content-Type': 'application/json' },
+	          body: JSON.stringify(payload)
+	        });
         const data = await resp.json();
         if (!resp.ok) {
           log(`采集失败：${data.error || resp.status}`);
           return;
         }
-        log(`采集完成：共 ${data.total} 条，已写入 ${data.data_file}`);
-        await loadData();
-      } catch (err) {
-        log(`请求失败：${err}`);
-      }
-    }
+	        log(`采集完成：共 ${data.total} 条，已写入 ${data.data_file}`);
+	        await loadData();
+	      } catch (err) {
+	        log(`请求失败：${err}`);
+	      } finally {
+	        setCollecting(false);
+	      }
+	    }
 
-    async function loadData() {
-      try {
-        const res = await fetch('./shorts.json');
-        if (!res.ok) { log('读取 shorts.json 失败'); return false; }
-        const json = await res.json();
-        saveToLocalStorage(json);
-        updateAll(json);
-        flash('采集成功，数据已刷新');
-        return true;
-      } catch (err) {
-        log(`加载失败：${err}`);
-        return false;
-      }
-    }
+	    async function loadData() {
+	      try {
+	        const res = await fetch('./shorts.json');
+	        if (!res.ok) { log('读取 shorts.json 失败'); return false; }
+	        const json = await res.json();
+	        saveToLocalStorage(json);
+	        updateAll(json);
+	        return true;
+	      } catch (err) {
+	        log(`加载失败：${err}`);
+	        return false;
+	      }
+	    }
 
     function exportReport() {
       const data = cachedData;
