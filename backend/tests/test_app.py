@@ -141,5 +141,93 @@ class TestCollectEndpoint:
         assert response.status_code == 400
 
 
+class TestDeduplication:
+    """Tests for video deduplication logic when using multiple keywords."""
+
+    @pytest.fixture
+    def client(self):
+        """Create test client."""
+        from app import app
+        app.config['TESTING'] = True
+        with app.test_client() as client:
+            yield client
+
+    def test_duplicate_video_ids_are_merged(self, client):
+        """When same video appears in multiple keyword searches, keep only one."""
+        # Mock data: same video_id appears in both keyword results
+        mock_video_a = {
+            "video_id": "video_123",
+            "title": "Test Video",
+            "channel_id": "channel_1",
+            "channel_title": "Test Channel",
+            "published_at": "2025-12-20T00:00:00Z",
+            "duration_seconds": 30,
+            "view_count": 1000,
+            "like_count": 100,
+            "comment_count": 10,
+            "tags": [],
+        }
+        mock_video_b = {
+            "video_id": "video_456",
+            "title": "Another Video",
+            "channel_id": "channel_2",
+            "channel_title": "Another Channel",
+            "published_at": "2025-12-20T00:00:00Z",
+            "duration_seconds": 45,
+            "view_count": 2000,
+            "like_count": 200,
+            "comment_count": 20,
+            "tags": [],
+        }
+
+        def mock_fetch_shorts(keywords, max_results, days, region):
+            if "keyword1" in keywords:
+                return [mock_video_a, mock_video_b]
+            elif "keyword2" in keywords:
+                # Return same video_a again (duplicate)
+                return [mock_video_a]
+            return []
+
+        with patch('app.fetch_shorts', side_effect=mock_fetch_shorts):
+            with patch('app.save_data', return_value={"data_file": "test", "preview_file": "test", "saved": 2, "preview_count": 2}):
+                response = client.post('/collect', json={
+                    'keyword_list': ['keyword1', 'keyword2'],
+                    'max_results': 10
+                })
+
+        assert response.status_code == 200
+        data = response.get_json()
+        # Should have 2 unique videos, not 3
+        assert data['total'] == 2
+
+    def test_different_video_ids_all_kept(self, client):
+        """Different video_ids from multiple keywords are all kept."""
+        mock_videos = [
+            {"video_id": f"video_{i}", "title": f"Video {i}", "view_count": i * 100,
+             "channel_id": "ch", "channel_title": "Ch", "published_at": "2025-12-20T00:00:00Z",
+             "duration_seconds": 30, "like_count": 10, "comment_count": 1, "tags": []}
+            for i in range(5)
+        ]
+
+        def mock_fetch_shorts(keywords, max_results, days, region):
+            if "kw1" in keywords:
+                return mock_videos[:3]
+            elif "kw2" in keywords:
+                return mock_videos[3:]
+            return []
+
+        with patch('app.fetch_shorts', side_effect=mock_fetch_shorts):
+            with patch('app.save_data', return_value={"data_file": "test", "preview_file": "test", "saved": 5, "preview_count": 3}):
+                response = client.post('/collect', json={
+                    'keyword_list': ['kw1', 'kw2'],
+                    'max_results': 10
+                })
+
+        assert response.status_code == 200
+        data = response.get_json()
+        # All 5 unique videos should be kept
+        assert data['total'] == 5
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
