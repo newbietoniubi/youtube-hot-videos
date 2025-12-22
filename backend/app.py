@@ -268,5 +268,82 @@ def collect():
         return jsonify({"error": str(exc)}), 500
 
 
+# ============ Favorites API ============
+
+@app.route("/favorites", methods=["GET"])
+def get_favorites_list():
+    """Get all favorites."""
+    from db import get_favorites, get_view_history
+    
+    favorites = get_favorites()
+    # Attach latest stats to each favorite
+    for fav in favorites:
+        history = get_view_history(fav["video_id"], limit=1)
+        if history:
+            fav["latest_view_count"] = history[0]["view_count"]
+            fav["latest_like_count"] = history[0]["like_count"]
+            fav["last_updated"] = history[0]["recorded_at"]
+    
+    return jsonify({"favorites": favorites, "total": len(favorites)})
+
+
+@app.route("/favorites", methods=["POST"])
+def add_favorite():
+    """Add a video to favorites."""
+    from db import add_favorite as db_add_favorite, record_view_count
+    
+    payload = request.get_json(silent=True) or {}
+    video_id = payload.get("video_id")
+    
+    if not video_id:
+        return jsonify({"error": "video_id is required"}), 400
+    
+    result = db_add_favorite(
+        video_id=video_id,
+        title=payload.get("title", ""),
+        channel_id=payload.get("channel_id", ""),
+        channel_title=payload.get("channel_title", ""),
+        thumbnail_url=payload.get("thumbnail_url", "")
+    )
+    
+    # Record initial view count if provided
+    view_count = payload.get("view_count")
+    if view_count is not None:
+        record_view_count(
+            video_id=video_id,
+            view_count=int(view_count),
+            like_count=payload.get("like_count"),
+            comment_count=payload.get("comment_count")
+        )
+    
+    return jsonify(result)
+
+
+@app.route("/favorites/<video_id>", methods=["DELETE"])
+def remove_favorite(video_id: str):
+    """Remove a video from favorites."""
+    from db import remove_favorite as db_remove_favorite
+    
+    result = db_remove_favorite(video_id)
+    return jsonify(result)
+
+
+@app.route("/favorites/<video_id>/history", methods=["GET"])
+def get_favorite_history(video_id: str):
+    """Get view count history for a favorited video."""
+    from db import get_view_history, get_favorite_with_latest_stats
+    
+    favorite = get_favorite_with_latest_stats(video_id)
+    if not favorite:
+        return jsonify({"error": "Favorite not found"}), 404
+    
+    history = get_view_history(video_id)
+    
+    return jsonify({
+        "video": favorite,
+        "history": history
+    })
+
+
 if __name__ == "__main__":
     app.run(host=HOST, port=PORT)
