@@ -46,10 +46,15 @@
       font-weight: 700;
     }
 
-    button.secondary {
+    button.secondary,
+    a.secondary {
       background: var(--panel);
       color: var(--text);
       border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     main {
@@ -326,7 +331,7 @@
   <header>
     <div>📊 YouTube Shorts 分析仪表板</div>
     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-      <a href="favorites.html" style="color:#fbbf24;text-decoration:none;font-weight:600;">⭐ 我的收藏</a>
+      <a href="favorites.html" class="secondary" style="text-decoration:none;display:inline-block;">⭐ 我的收藏</a>
       <button id="exportBtn" class="secondary">导出报告</button>
     </div>
   </header>

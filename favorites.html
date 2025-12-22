@@ -80,8 +80,26 @@
 
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
+        }
+
+        @media (max-width: 1200px) {
+            .video-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .video-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .video-card {
@@ -278,7 +296,7 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
         }
 
         async function loadFavorites() {
@@ -338,12 +356,20 @@
             <div class="video-meta">📅 收藏于：${created}</div>
             <div class="video-meta">🔄 更新于：${lastUpdate}</div>
             <div class="video-actions">
-              <button class="fav-btn" onclick="showTrend('${item.video_id}', '${escapeHtml(item.title)}')">📈 趋势</button>
-              <button class="fav-btn danger" onclick="removeFavorite('${item.video_id}')">❌ 取消收藏</button>
+              <button class="fav-btn trend-btn" data-id="${item.video_id}">📈 趋势</button>
+              <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
             </div>
           </div>
         </div>`;
             }).join('');
+
+            // Add event listeners after rendering
+            container.querySelectorAll('.trend-btn').forEach(btn => {
+                btn.onclick = () => showTrend(btn.dataset.id);
+            });
+            container.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.onclick = () => removeFavorite(btn.dataset.id);
+            });
         }
 
         async function removeFavorite(videoId) {
@@ -356,14 +382,15 @@
             }
         }
 
-        async function showTrend(videoId, title) {
+        async function showTrend(videoId) {
             try {
                 const resp = await fetch(`${backendBase}/favorites/${videoId}/history`);
                 if (!resp.ok) throw new Error('Failed');
                 const data = await resp.json();
                 const history = (data.history || []).reverse(); // oldest first
+                const title = data.video?.title || '观看量趋势';
 
-                document.getElementById('modalTitle').textContent = title || '观看量趋势';
+                document.getElementById('modalTitle').textContent = title;
                 document.getElementById('trendModal').classList.add('open');
 
                 if (!history.length) {
@@ -378,12 +405,33 @@
 
                 trendChart.setOption({
                     darkMode: true,
-                    tooltip: { trigger: 'axis' },
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: params => {
+                            const p = params[0];
+                            return `${p.name}<br/>观看量: ${p.value.toLocaleString()}`;
+                        }
+                    },
+                    grid: {
+                        left: 80,
+                        right: 20,
+                        top: 40,
+                        bottom: 40
+                    },
                     xAxis: {
                         type: 'category',
-                        data: history.map(h => h.recorded_at.slice(5, 16).replace('T', ' '))
+                        data: history.map(h => h.recorded_at.slice(5, 16).replace('T', ' ')),
+                        axisLabel: { color: '#9ca3af' }
                     },
-                    yAxis: { type: 'value', name: '观看量' },
+                    yAxis: {
+                        type: 'value',
+                        name: '观看量',
+                        nameTextStyle: { color: '#9ca3af' },
+                        axisLabel: {
+                            color: '#9ca3af',
+                            formatter: val => val >= 1000000 ? (val / 1000000).toFixed(1) + 'M' : val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val
+                        }
+                    },
                     series: [{
                         type: 'line',
                         data: history.map(h => h.view_count),
