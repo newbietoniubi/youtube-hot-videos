@@ -41,3 +41,7 @@ Examples:
 - After completing code changes, provide suggested `git add` and `git commit` commands
 - Include appropriate conventional commit message
 - Do NOT run these commands automatically; let user execute after testing
+
+### Testing policy
+- After modifying backend Python code, run `pytest` and report results
+- If tests fail, fix the issue before completing the task
