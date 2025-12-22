@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <title>YouTube Shorts 分析仪表板</title>
@@ -12,51 +13,320 @@
       --primary: #22c55e;
       --border: #334155;
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-    header { padding: 16px 20px; background: #111827; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 2; }
-    button { background: var(--primary); color: #0b1220; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 700; }
-    button.secondary { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
-    main { padding: 16px 20px; display: grid; gap: 16px; }
-    .card { background: var(--panel); border-radius: 10px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.25); border: 1px solid #0b1220; }
-    label { display: block; margin-bottom: 6px; font-size: 14px; color: var(--muted); }
-    input, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); }
-    .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-    pre { white-space: pre-wrap; word-break: break-word; background: #0b1220; padding: 12px; border-radius: 8px; border: 1px solid var(--panel); max-height: 220px; overflow: auto; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-    .stat { padding: 12px; border-radius: 10px; background: #111827; border: 1px solid var(--border); }
-    .stat .label { color: var(--muted); font-size: 13px; }
-    .stat .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
-    .quick-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .pill { padding:6px 10px; border-radius:999px; background: #111827; border:1px solid var(--border); color: var(--text); cursor:pointer; font-size:13px; }
-    .pill:hover { border-color: var(--primary); color: var(--primary); }
-    .gear-spin { display:inline-block; animation: gearSpin 1s linear infinite; transform-origin: 50% 50%; }
-    @keyframes gearSpin { to { transform: rotate(360deg); } }
-    .charts { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-    .chart { height: 320px; border-radius: 12px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; color: var(--text); }
-    th, td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
-    th { color: var(--muted); font-weight: 600; }
-    .pagination { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-    a.link { color: #38bdf8; text-decoration: none; }
-    a.link:hover { text-decoration: underline; }
-    .log-header { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
-    .chevron { transition: transform .2s; display:inline-block; }
-    .chevron.open { transform: rotate(90deg); }
-    #log { max-height: 220px; }
-    .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-    .video-card { background: #111827; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,.25); display: flex; flex-direction: column; }
-    .video-thumb img { width: 100%; display: block; }
-    .video-body { padding: 10px; display: grid; gap: 6px; }
-    .video-title { font-weight: 700; line-height: 1.4; color: #e2e8f0; text-decoration: none; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em; }
-    .video-title:hover { text-decoration: underline; color: #38bdf8; }
-    .video-meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 16px 20px;
+      background: #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    button {
+      background: var(--primary);
+      color: #0b1220;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    main {
+      padding: 16px 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+      border: 1px solid #0b1220;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b1220;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--panel);
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 10px;
+      background: #111827;
+      border: 1px solid var(--border);
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat .value {
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .quick-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .gear-spin {
+      display: inline-block;
+      animation: gearSpin 1s linear infinite;
+      transform-origin: 50% 50%;
+    }
+
+    @keyframes gearSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .charts {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .chart {
+      height: 320px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    a.link {
+      color: #38bdf8;
+      text-decoration: none;
+    }
+
+    a.link:hover {
+      text-decoration: underline;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chevron {
+      transition: transform .2s;
+      display: inline-block;
+    }
+
+    .chevron.open {
+      transform: rotate(90deg);
+    }
+
+    #log {
+      max-height: 220px;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .video-card {
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .video-thumb img {
+      width: 100%;
+      display: block;
+    }
+
+    .video-body {
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .video-title {
+      font-weight: 700;
+      line-height: 1.4;
+      color: #e2e8f0;
+      text-decoration: none;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.8em;
+    }
+
+    .video-title:hover {
+      text-decoration: underline;
+      color: #38bdf8;
+    }
+
+    .video-meta {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .video-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .fav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all .2s;
+    }
+
+    .fav-btn:hover {
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+
+    .fav-btn.active {
+      background: #fbbf24;
+      color: #0b1220;
+      border-color: #fbbf24;
+    }
+
+    .fav-section {
+      border: 2px solid #fbbf24;
+    }
+
+    .fav-empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px;
+    }
+
+    .trend-chart {
+      height: 200px;
+      margin-top: 10px;
+    }
   </style>
 </head>
+
 <body>
   <header>
     <div>📊 YouTube Shorts 分析仪表板</div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <a href="favorites.html" style="color:#fbbf24;text-decoration:none;font-weight:600;">⭐ 我的收藏</a>
       <button id="exportBtn" class="secondary">导出报告</button>
     </div>
   </header>
@@ -139,45 +409,174 @@
     const DEFAULT_KEYWORD = "";
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 7;
-	    const QUICK_PRESETS = [
-	      { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
-	    ];
-	    const logBox = document.getElementById('log');
-	    const chevron = document.getElementById('chevron');
-	    const logToggle = document.getElementById('logToggle');
-	    const collectBtn = document.getElementById('collectBtn');
-	    let logVisible = false;
-	    let cachedData = [];
-	    let charts = {};
-	    let pagination = { page: 1, pageSize: 12 };
+    const QUICK_PRESETS = [
+      { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
+    ];
+    const logBox = document.getElementById('log');
+    const chevron = document.getElementById('chevron');
+    const logToggle = document.getElementById('logToggle');
+    const collectBtn = document.getElementById('collectBtn');
+    let logVisible = false;
+    let cachedData = [];
+    let charts = {};
+    let pagination = { page: 1, pageSize: 12 };
 
-	        function log(msg) {
-	      const time = new Date().toLocaleTimeString();
-	      logBox.textContent += `[${time}] ${msg}\n`;
-	      logBox.scrollTop = logBox.scrollHeight;
-	    }
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      logBox.textContent += `[${time}] ${msg}\n`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
 
-	    function toggleLog() {
-	      logVisible = !logVisible;
-	      logBox.style.display = logVisible ? 'block' : 'none';
-	      chevron.classList.toggle('open', logVisible);
-	    }
+    function toggleLog() {
+      logVisible = !logVisible;
+      logBox.style.display = logVisible ? 'block' : 'none';
+      chevron.classList.toggle('open', logVisible);
+    }
 
-	    function setCollecting(loading) {
-	      if (!collectBtn) return;
-	      collectBtn.disabled = loading;
-	      collectBtn.innerHTML = loading ? '<span class="gear-spin">⚙️</span> 采集中...' : '🚀 开始采集';
-	    }
+    function setCollecting(loading) {
+      if (!collectBtn) return;
+      collectBtn.disabled = loading;
+      collectBtn.innerHTML = loading ? '<span class="gear-spin">⚙️</span> 采集中...' : '🚀 开始采集';
+    }
 
 
     function fmtCompact(n) {
       const num = Number(n) || 0;
-      if (num >= 1_000_000) return (num/1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-      if (num >= 1_000) return (num/1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
       return num.toString();
     }
 
-function saveToLocalStorage(data) {
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ========== Favorites Functions ==========
+    let favoritesData = [];
+
+    async function loadFavorites() {
+      try {
+        const resp = await fetch(`${backendBase}/favorites`);
+        if (!resp.ok) throw new Error('Failed to load favorites');
+        const data = await resp.json();
+        favoritesData = data.favorites || [];
+        renderFavorites();
+      } catch (err) {
+        console.error('Load favorites error:', err);
+      }
+    }
+
+    function renderFavorites() {
+      const container = document.getElementById('favoritesGrid');
+      const emptyEl = document.getElementById('favEmpty');
+      const countEl = document.getElementById('favCount');
+
+      if (!favoritesData.length) {
+        container.innerHTML = '';
+        emptyEl.style.display = 'block';
+        countEl.textContent = '';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      countEl.textContent = `(${favoritesData.length})`;
+
+      container.innerHTML = favoritesData.map(item => {
+        const url = `https://www.youtube.com/watch?v=${item.video_id}`;
+        const thumb = `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg`;
+        const views = item.latest_view_count ? fmtCompact(item.latest_view_count) : '-';
+        const created = (item.created_at || '').slice(0, 10);
+        return `
+        <div class="video-card">
+          <a class="video-thumb" href="${url}" target="_blank">
+            <img src="${thumb}" alt="${escapeHtml(item.title)}">
+          </a>
+          <div class="video-body">
+            <a class="video-title" href="${url}" target="_blank">${escapeHtml(item.title)}</a>
+            <div class="video-meta">频道：${escapeHtml(item.channel_title || '')}</div>
+            <div class="video-meta">👁️ ${views}</div>
+            <div class="video-meta">收藏于：${created}</div>
+            <div class="video-actions">
+              <button class="fav-btn active" onclick="removeFavorite('${item.video_id}')">❌ 取消收藏</button>
+              <button class="fav-btn" onclick="showTrend('${item.video_id}')">📈 趋势</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function toggleFavorite(btn) {
+      const item = JSON.parse(btn.dataset.video);
+      const isFav = favoritesData.some(f => f.video_id === item.video_id);
+
+      if (isFav) {
+        await removeFavorite(item.video_id);
+      } else {
+        try {
+          const resp = await fetch(`${backendBase}/favorites`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              video_id: item.video_id,
+              title: item.title,
+              channel_id: item.channel_id,
+              channel_title: item.channel_title,
+              view_count: item.view_count,
+              like_count: item.like_count,
+              comment_count: item.comment_count
+            })
+          });
+          if (resp.ok) {
+            log(`已收藏：${item.title}`);
+            btn.classList.add('active');
+            btn.textContent = '✅ 已收藏';
+            await loadFavorites();
+          }
+        } catch (err) {
+          log(`收藏失败：${err}`);
+        }
+      }
+    }
+
+    async function removeFavorite(videoId) {
+      try {
+        const resp = await fetch(`${backendBase}/favorites/${videoId}`, { method: 'DELETE' });
+        if (resp.ok) {
+          log(`已取消收藏`);
+          await loadFavorites();
+        }
+      } catch (err) {
+        log(`取消收藏失败：${err}`);
+      }
+    }
+
+    async function showTrend(videoId) {
+      try {
+        const resp = await fetch(`${backendBase}/favorites/${videoId}/history`);
+        if (!resp.ok) throw new Error('Failed to load history');
+        const data = await resp.json();
+        const history = data.history || [];
+
+        if (!history.length) {
+          alert('暂无历史数据，请等待定时任务抓取');
+          return;
+        }
+
+        // Simple alert for now - could be enhanced with a modal chart
+        const summary = history.slice(0, 5).map(h =>
+          `${h.recorded_at.slice(0, 16)}: ${fmtCompact(h.view_count)}`
+        ).join('\\n');
+        alert(`最近观看量记录：\\n${summary}`);
+      } catch (err) {
+        alert('加载历史数据失败');
+      }
+    }
+
+    function saveToLocalStorage(data) {
       localStorage.setItem(LS_KEY, JSON.stringify(data));
       log(`已写入 localStorage，共 ${data.length} 条`);
     }
@@ -190,11 +589,11 @@ function saveToLocalStorage(data) {
 
     function renderStats(data) {
       const total = data.length;
-      const views = data.reduce((s,v)=> s + (+v.view_count || 0), 0);
-      const likes = data.reduce((s,v)=> s + (+v.like_count || 0), 0);
-      const comments = data.reduce((s,v)=> s + (+v.comment_count || 0), 0);
-      const avgView = total ? Math.round(views/total) : 0;
-      const avgLike = total ? Math.round(likes/total) : 0;
+      const views = data.reduce((s, v) => s + (+v.view_count || 0), 0);
+      const likes = data.reduce((s, v) => s + (+v.like_count || 0), 0);
+      const comments = data.reduce((s, v) => s + (+v.comment_count || 0), 0);
+      const avgView = total ? Math.round(views / total) : 0;
+      const avgLike = total ? Math.round(likes / total) : 0;
       const cards = [
         ['视频总数', total],
         ['观看总数', fmtCompact(views)],
@@ -203,7 +602,7 @@ function saveToLocalStorage(data) {
         ['平均观看', fmtCompact(avgView)],
         ['平均点赞', fmtCompact(avgLike)]
       ];
-      document.getElementById('stats').innerHTML = cards.map(([t,v]) => `
+      document.getElementById('stats').innerHTML = cards.map(([t, v]) => `
         <div class="stat"><div class="label">${t}</div><div class="value">${v}</div></div>
       `).join('');
     }
@@ -215,17 +614,17 @@ function saveToLocalStorage(data) {
         if (!k) return;
         m.set(k, (m.get(k) || 0) + 1);
       });
-      return [...m.entries()].sort((a,b)=> b[1]-a[1]);
+      return [...m.entries()].sort((a, b) => b[1] - a[1]);
     }
 
     function renderCharts(data) {
-      const viewSum = data.reduce((s,v)=> s + (+v.view_count || 0), 0);
-      const likeSum = data.reduce((s,v)=> s + (+v.like_count || 0), 0);
-      const commentSum = data.reduce((s,v)=> s + (+v.comment_count || 0), 0);
+      const viewSum = data.reduce((s, v) => s + (+v.view_count || 0), 0);
+      const likeSum = data.reduce((s, v) => s + (+v.like_count || 0), 0);
+      const commentSum = data.reduce((s, v) => s + (+v.comment_count || 0), 0);
 
-      const durations = [0,15,30,45,60,90];
-      const durationBuckets = durations.slice(0,-1).map((start,i) => {
-        const end = durations[i+1];
+      const durations = [0, 15, 30, 45, 60, 90];
+      const durationBuckets = durations.slice(0, -1).map((start, i) => {
+        const end = durations[i + 1];
         const count = data.filter(v => {
           const d = +v.duration_seconds || 0;
           return d >= start && d < end;
@@ -235,7 +634,7 @@ function saveToLocalStorage(data) {
 
       const scatter = data.map(v => [+v.view_count || 0, +v.like_count || 0]);
 
-      const byMonth = groupCount(data, v => (v.published_at || '').slice(0,7));
+      const byMonth = groupCount(data, v => (v.published_at || '').slice(0, 7));
 
       const channelCounts = (() => {
         const map = new Map();
@@ -245,27 +644,29 @@ function saveToLocalStorage(data) {
           const count = map.get(key)?.count || 0;
           map.set(key, { title, channel_id: v.channel_id, count: count + 1 });
         });
-        return [...map.entries()].map(([,val])=>val).sort((a,b)=> b.count - a.count).slice(0,10);
+        return [...map.entries()].map(([, val]) => val).sort((a, b) => b.count - a.count).slice(0, 10);
       })();;
 
       const tagCounts = (() => {
         const m = new Map();
-        data.forEach(v => (v.tags || []).forEach(t => m.set(t, (m.get(t)||0)+1)));
-        return [...m.entries()].map(([name,value])=>({name,value}));
+        data.forEach(v => (v.tags || []).forEach(t => m.set(t, (m.get(t) || 0) + 1)));
+        return [...m.entries()].map(([name, value]) => ({ name, value }));
       })();;
 
       const viewBuckets = (() => {
         const buckets = [
-          { label: '<1k', min:0, max:1000 },
-          { label: '1k-10k', min:1000, max:10000 },
-          { label: '10k-100k', min:10000, max:100000 },
-          { label: '100k-1M', min:100000, max:1000000 },
-          { label: '>=1M', min:1000000, max: Infinity },
+          { label: '<1k', min: 0, max: 1000 },
+          { label: '1k-10k', min: 1000, max: 10000 },
+          { label: '10k-100k', min: 10000, max: 100000 },
+          { label: '100k-1M', min: 100000, max: 1000000 },
+          { label: '>=1M', min: 1000000, max: Infinity },
         ];
-        return buckets.map(b => ({ name: b.label, value: data.filter(v => {
-          const views = +v.view_count || 0;
-          return views >= b.min && views < b.max;
-        }).length }));
+        return buckets.map(b => ({
+          name: b.label, value: data.filter(v => {
+            const views = +v.view_count || 0;
+            return views >= b.min && views < b.max;
+          }).length
+        }));
       })();;
 
       const radarMax = Math.max(
@@ -277,44 +678,44 @@ function saveToLocalStorage(data) {
           id: 'chart1',
           option: {
             darkMode: true,
-            title: { text: '互动分布', textStyle:{color:'#e2e8f0'} },
+            title: { text: '互动分布', textStyle: { color: '#e2e8f0' } },
             tooltip: {},
-            xAxis: { type:'category', data:['观看','点赞','评论'] },
-            yAxis: { type:'value' },
-            series: [{ type:'bar', data:[viewSum, likeSum, commentSum], itemStyle:{color:'#22c55e'} }]
+            xAxis: { type: 'category', data: ['观看', '点赞', '评论'] },
+            yAxis: { type: 'value' },
+            series: [{ type: 'bar', data: [viewSum, likeSum, commentSum], itemStyle: { color: '#22c55e' } }]
           }
         },
         {
           id: 'chart2',
           option: {
-            darkMode:true,
-            title:{ text:'时长分布(秒)', textStyle:{color:'#e2e8f0'} },
-            tooltip:{},
-            xAxis:{ type:'category', data:['0-15','15-30','30-45','45-60','60-90'] },
-            yAxis:{ type:'value' },
-            series:[{ type:'bar', data: durationBuckets, itemStyle:{color:'#38bdf8'} }]
+            darkMode: true,
+            title: { text: '时长分布(秒)', textStyle: { color: '#e2e8f0' } },
+            tooltip: {},
+            xAxis: { type: 'category', data: ['0-15', '15-30', '30-45', '45-60', '60-90'] },
+            yAxis: { type: 'value' },
+            series: [{ type: 'bar', data: durationBuckets, itemStyle: { color: '#38bdf8' } }]
           }
         },
         {
           id: 'chart3',
           option: {
-            darkMode:true,
-            title:{ text:'观看-点赞散点', textStyle:{color:'#e2e8f0'} },
-            tooltip:{ trigger:'item' },
-            xAxis:{ type:'value', name:'观看' },
-            yAxis:{ type:'value', name:'点赞' },
-            series:[{ type:'scatter', data: scatter, symbolSize: 6, itemStyle:{color:'#a855f7'} }]
+            darkMode: true,
+            title: { text: '观看-点赞散点', textStyle: { color: '#e2e8f0' } },
+            tooltip: { trigger: 'item' },
+            xAxis: { type: 'value', name: '观看' },
+            yAxis: { type: 'value', name: '点赞' },
+            series: [{ type: 'scatter', data: scatter, symbolSize: 6, itemStyle: { color: '#a855f7' } }]
           }
         },
         {
           id: 'chart4',
           option: {
-            darkMode:true,
-            title:{ text:'发布时间趋势', textStyle:{color:'#e2e8f0'} },
-            tooltip:{ trigger:'axis' },
-            xAxis:{ type:'category', data: byMonth.map(d=>d[0]) },
-            yAxis:{ type:'value' },
-            series:[{ type:'line', data: byMonth.map(d=>d[1]), smooth:true, areaStyle:{} }]
+            darkMode: true,
+            title: { text: '发布时间趋势', textStyle: { color: '#e2e8f0' } },
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: byMonth.map(d => d[0]) },
+            yAxis: { type: 'value' },
+            series: [{ type: 'line', data: byMonth.map(d => d[1]), smooth: true, areaStyle: {} }]
           },
           onClick: params => {
             if (params.name) {
@@ -325,12 +726,12 @@ function saveToLocalStorage(data) {
         {
           id: 'chart5',
           option: {
-            darkMode:true,
-            title:{ text:'热门频道', textStyle:{color:'#e2e8f0'} },
-            tooltip:{},
-            xAxis:{ type:'value' },
-            yAxis:{ type:'category', data: channelCounts.map(c=>c.title).reverse() },
-            series:[{ type:'bar', data: channelCounts.map(c=>c.count).reverse(), itemStyle:{color:'#f97316'} }]
+            darkMode: true,
+            title: { text: '热门频道', textStyle: { color: '#e2e8f0' } },
+            tooltip: {},
+            xAxis: { type: 'value' },
+            yAxis: { type: 'category', data: channelCounts.map(c => c.title).reverse() },
+            series: [{ type: 'bar', data: channelCounts.map(c => c.count).reverse(), itemStyle: { color: '#f97316' } }]
           },
           onClick: params => {
             const index = channelCounts.length - 1 - params.dataIndex;
@@ -343,41 +744,41 @@ function saveToLocalStorage(data) {
         {
           id: 'chart6',
           option: {
-            darkMode:true,
-            title:{ text:'标签词云', textStyle:{color:'#e2e8f0'} },
-            series:[{
-              type:'wordCloud',
-              shape:'circle',
-              sizeRange:[12,42],
-              rotationRange:[0,0],
-              textStyle:{ color: () => `hsl(${Math.random()*360},70%,60%)` },
-              data: tagCounts.length ? tagCounts : [{name:'暂无标签', value:1}]
+            darkMode: true,
+            title: { text: '标签词云', textStyle: { color: '#e2e8f0' } },
+            series: [{
+              type: 'wordCloud',
+              shape: 'circle',
+              sizeRange: [12, 42],
+              rotationRange: [0, 0],
+              textStyle: { color: () => `hsl(${Math.random() * 360},70%,60%)` },
+              data: tagCounts.length ? tagCounts : [{ name: '暂无标签', value: 1 }]
             }]
           }
         },
         {
           id: 'chart7',
           option: {
-            darkMode:true,
-            title:{ text:'参与度雷达', textStyle:{color:'#e2e8f0'} },
-            tooltip:{},
-            radar:{
-              indicator:[
-                { name:'观看', max: radarMax },
-                { name:'点赞', max: radarMax },
-                { name:'评论', max: radarMax }
+            darkMode: true,
+            title: { text: '参与度雷达', textStyle: { color: '#e2e8f0' } },
+            tooltip: {},
+            radar: {
+              indicator: [
+                { name: '观看', max: radarMax },
+                { name: '点赞', max: radarMax },
+                { name: '评论', max: radarMax }
               ]
             },
-            series:[{ type:'radar', data:[{ value:[viewSum, likeSum, commentSum], areaStyle:{color:'rgba(34,197,94,0.3)'} }] }]
+            series: [{ type: 'radar', data: [{ value: [viewSum, likeSum, commentSum], areaStyle: { color: 'rgba(34,197,94,0.3)' } }] }]
           }
         },
         {
           id: 'chart8',
           option: {
-            darkMode:true,
-            title:{ text:'观看分布', textStyle:{color:'#e2e8f0'} },
-            tooltip:{ trigger:'item' },
-            series:[{ type:'pie', radius:['30%','70%'], data: viewBuckets }]
+            darkMode: true,
+            title: { text: '观看分布', textStyle: { color: '#e2e8f0' } },
+            tooltip: { trigger: 'item' },
+            series: [{ type: 'pie', radius: ['30%', '70%'], data: viewBuckets }]
           }
         },
       ];
@@ -388,7 +789,7 @@ function saveToLocalStorage(data) {
         if (charts[cfg.id]) {
           charts[cfg.id].dispose();
         }
-        const inst = echarts.init(dom, null, { renderer:'canvas' });
+        const inst = echarts.init(dom, null, { renderer: 'canvas' });
         inst.setOption(cfg.option);
         if (cfg.onClick) inst.on('click', cfg.onClick);
         charts[cfg.id] = inst;
@@ -406,17 +807,20 @@ function saveToLocalStorage(data) {
         const views = fmtCompact(item.view_count);
         const likes = fmtCompact(item.like_count);
         const comments = fmtCompact(item.comment_count);
-        const published = (item.published_at || '').replace('T',' ').replace('Z','');
+        const published = (item.published_at || '').replace('T', ' ').replace('Z', '');
         return `
         <div class="video-card">
           <a class="video-thumb" href="${url}" target="_blank" rel="noopener noreferrer">
-            <img src="${thumb}" alt="${item.title || ''}">
+            <img src="${thumb}" alt="${escapeHtml(item.title || '')}">
           </a>
           <div class="video-body">
-            <a class="video-title" href="${url}" target="_blank" rel="noopener noreferrer">${item.title || ''}</a>
-            <div class="video-meta">频道：${item.channel_title || ''}</div>
+            <a class="video-title" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>
+            <div class="video-meta">频道：${escapeHtml(item.channel_title || '')}</div>
             <div class="video-meta">👁️ ${views} · 👍 ${likes} · 💬 ${comments}</div>
             <div class="video-meta">发布时间：${published}</div>
+            <div class="video-actions">
+              <button class="fav-btn" data-video='${JSON.stringify(item).replace(/'/g, "&#39;")}' onclick="toggleFavorite(this)">⭐ 收藏</button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -426,14 +830,14 @@ function saveToLocalStorage(data) {
       document.getElementById('nextPage').disabled = pagination.page >= totalPages;
     }
 
-function updateAll(data) {
-      const sorted = [...data].sort((a,b) => (b.view_count||0) - (a.view_count||0));
+    function updateAll(data) {
+      const sorted = [...data].sort((a, b) => (b.view_count || 0) - (a.view_count || 0));
       cachedData = sorted;
       renderStats(sorted);
       renderCharts(sorted);
       renderCards(sorted);
     }
-	    async function triggerCollect(isAuto = false, keywordList = null) {
+    async function triggerCollect(isAuto = false, keywordList = null) {
       const keywordsInput = document.getElementById('keywords');
       const daysInput = document.getElementById('days');
       const keywords = keywordsInput.value.trim();
@@ -448,59 +852,59 @@ function updateAll(data) {
       } else {
         payload.keywords = keywords;
       }
-	      log(`开始采集：${kwList.join(' / ')}, max=${max_results}, days=${days}`);
-	      try {
-	        setCollecting(true);
-	        const resp = await fetch(`${backendBase}/collect`, {
-	          method: 'POST',
-	          headers: { 'Content-Type': 'application/json' },
-	          body: JSON.stringify(payload)
-	        });
+      log(`开始采集：${kwList.join(' / ')}, max=${max_results}, days=${days}`);
+      try {
+        setCollecting(true);
+        const resp = await fetch(`${backendBase}/collect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
         const data = await resp.json();
         if (!resp.ok) {
           log(`采集失败：${data.error || resp.status}`);
           return;
         }
-	        log(`采集完成：共 ${data.total} 条，已写入 ${data.data_file}`);
-	        await loadData();
-	      } catch (err) {
-	        log(`请求失败：${err}`);
-	      } finally {
-	        setCollecting(false);
-	      }
-	    }
+        log(`采集完成：共 ${data.total} 条，已写入 ${data.data_file}`);
+        await loadData();
+      } catch (err) {
+        log(`请求失败：${err}`);
+      } finally {
+        setCollecting(false);
+      }
+    }
 
-	    async function loadData() {
-	      try {
-	        const res = await fetch('./shorts.json');
-	        if (!res.ok) { log('读取 shorts.json 失败'); return false; }
-	        const json = await res.json();
-	        saveToLocalStorage(json);
-	        updateAll(json);
-	        return true;
-	      } catch (err) {
-	        log(`加载失败：${err}`);
-	        return false;
-	      }
-	    }
+    async function loadData() {
+      try {
+        const res = await fetch('./shorts.json');
+        if (!res.ok) { log('读取 shorts.json 失败'); return false; }
+        const json = await res.json();
+        saveToLocalStorage(json);
+        updateAll(json);
+        return true;
+      } catch (err) {
+        log(`加载失败：${err}`);
+        return false;
+      }
+    }
 
     function exportReport() {
       const data = cachedData;
       if (!data.length) { log('无数据可导出'); return; }
       const total = data.length;
-      const views = data.reduce((s,v)=> s + (+v.view_count || 0), 0);
-      const likes = data.reduce((s,v)=> s + (+v.like_count || 0), 0);
-      const comments = data.reduce((s,v)=> s + (+v.comment_count || 0), 0);
+      const views = data.reduce((s, v) => s + (+v.view_count || 0), 0);
+      const likes = data.reduce((s, v) => s + (+v.like_count || 0), 0);
+      const comments = data.reduce((s, v) => s + (+v.comment_count || 0), 0);
       const stats = { total, views, likes, comments };
-      const topVideos = [...data].sort((a,b)=> (b.view_count||0) - (a.view_count||0)).slice(0,20);
-      const topChannels = groupCount(data, v => v.channel_title || '未知').slice(0,10)
-        .map(([channel,count]) => ({ channel, count }));
+      const topVideos = [...data].sort((a, b) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 20);
+      const topChannels = groupCount(data, v => v.channel_title || '未知').slice(0, 10)
+        .map(([channel, count]) => ({ channel, count }));
       const tagMap = new Map();
-      data.forEach(v => (v.tags||[]).forEach(t => tagMap.set(t, (tagMap.get(t)||0)+1)));
-      const topTags = [...tagMap.entries()].sort((a,b)=> b[1]-a[1]).slice(0,20)
-        .map(([tag,count]) => ({ tag, count }));
+      data.forEach(v => (v.tags || []).forEach(t => tagMap.set(t, (tagMap.get(t) || 0) + 1)));
+      const topTags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20)
+        .map(([tag, count]) => ({ tag, count }));
       const payload = { generated_at: new Date().toISOString(), stats, topVideos, topChannels, topTags };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = 'report.json'; a.click();
@@ -548,7 +952,9 @@ function updateAll(data) {
         log('localStorage 无数据，请输入关键词采集');
       }
       renderQuickPills();
+      loadFavorites();
     })();;
   </script>
 </body>
+
 </html>

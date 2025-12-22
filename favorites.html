@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>我的收藏 - YouTube Shorts 分析系统</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1f2937;
+            --muted: #cbd5e1;
+            --text: #e2e8f0;
+            --primary: #22c55e;
+            --border: #334155;
+            --fav-color: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            padding: 16px 20px;
+            background: #111827;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        header a {
+            color: var(--text);
+            text-decoration: none;
+            margin-left: 16px;
+        }
+
+        header a:hover {
+            color: var(--primary);
+        }
+
+        button {
+            background: var(--primary);
+            color: #0b1220;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button.secondary {
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--panel);
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+            border: 1px solid #0b1220;
+            margin-bottom: 16px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .video-card {
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .25);
+        }
+
+        .video-thumb img {
+            width: 100%;
+            display: block;
+        }
+
+        .video-body {
+            padding: 12px;
+        }
+
+        .video-title {
+            font-weight: 700;
+            line-height: 1.4;
+            color: #e2e8f0;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .video-title:hover {
+            text-decoration: underline;
+            color: #38bdf8;
+        }
+
+        .video-meta {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .fav-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--muted);
+            transition: all .2s;
+        }
+
+        .fav-btn:hover {
+            border-color: var(--fav-color);
+            color: var(--fav-color);
+        }
+
+        .fav-btn.danger:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 40px;
+            font-size: 16px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: #111827;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .trend-chart {
+            height: 300px;
+            background: #111827;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, .7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>⭐ 我的收藏</div>
+        <nav>
+            <a href="index.html">← 返回首页</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="stats-row" id="statsRow"></div>
+
+        <section class="card">
+            <h3>收藏视频列表 <span id="favCount" style="font-size:14px;color:var(--muted);"></span></h3>
+            <div class="video-grid" id="favoritesGrid"></div>
+            <div id="emptyState" class="empty" style="display:none;">
+                还没有收藏任何视频<br>
+                <a href="index.html" style="color:#38bdf8;">返回首页添加收藏</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Trend Modal -->
+    <div class="modal" id="trendModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">观看量趋势</h3>
+                <button class="modal-close" onclick="closeTrendModal()">×</button>
+            </div>
+            <div id="trendChart" class="trend-chart"></div>
+        </div>
+    </div>
+
+    <script src="./assets/echarts.min.js"></script>
+    <script>
+        const backendBase = 'http://127.0.0.1:5000';
+        let favoritesData = [];
+        let trendChart = null;
+
+        function fmtCompact(n) {
+            const num = Number(n) || 0;
+            if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return num.toString();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        async function loadFavorites() {
+            try {
+                const resp = await fetch(`${backendBase}/favorites`);
+                if (!resp.ok) throw new Error('Failed to load');
+                const data = await resp.json();
+                favoritesData = data.favorites || [];
+                renderStats();
+                renderFavorites();
+            } catch (err) {
+                console.error('Load error:', err);
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('emptyState').textContent = '无法连接后端，请确保后端已启动';
+            }
+        }
+
+        function renderStats() {
+            const total = favoritesData.length;
+            const withData = favoritesData.filter(f => f.latest_view_count).length;
+            document.getElementById('statsRow').innerHTML = `
+        <div class="stat-item"><div class="stat-label">收藏总数</div><div class="stat-value">${total}</div></div>
+        <div class="stat-item"><div class="stat-label">有追踪数据</div><div class="stat-value">${withData}</div></div>
+      `;
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('favoritesGrid');
+            const empty = document.getElementById('emptyState');
+            const count = document.getElementById('favCount');
+
+            if (!favoritesData.length) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                count.textContent = '';
+                return;
+            }
+
+            empty.style.display = 'none';
+            count.textContent = `(${favoritesData.length})`;
+
+            container.innerHTML = favoritesData.map(item => {
+                const url = `https://www.youtube.com/watch?v=${item.video_id}`;
+                const thumb = `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg`;
+                const views = item.latest_view_count ? fmtCompact(item.latest_view_count) : '暂无数据';
+                const created = (item.created_at || '').slice(0, 10);
+                const lastUpdate = item.last_updated ? item.last_updated.slice(0, 16).replace('T', ' ') : '未更新';
+                return `
+        <div class="video-card">
+          <a class="video-thumb" href="${url}" target="_blank">
+            <img src="${thumb}" alt="${escapeHtml(item.title)}">
+          </a>
+          <div class="video-body">
+            <a class="video-title" href="${url}" target="_blank">${escapeHtml(item.title)}</a>
+            <div class="video-meta">📺 ${escapeHtml(item.channel_title || '未知频道')}</div>
+            <div class="video-meta">👁️ 当前观看：${views}</div>
+            <div class="video-meta">📅 收藏于：${created}</div>
+            <div class="video-meta">🔄 更新于：${lastUpdate}</div>
+            <div class="video-actions">
+              <button class="fav-btn" onclick="showTrend('${item.video_id}', '${escapeHtml(item.title)}')">📈 趋势</button>
+              <button class="fav-btn danger" onclick="removeFavorite('${item.video_id}')">❌ 取消收藏</button>
+            </div>
+          </div>
+        </div>`;
+            }).join('');
+        }
+
+        async function removeFavorite(videoId) {
+            if (!confirm('确定取消收藏？')) return;
+            try {
+                await fetch(`${backendBase}/favorites/${videoId}`, { method: 'DELETE' });
+                await loadFavorites();
+            } catch (err) {
+                alert('操作失败');
+            }
+        }
+
+        async function showTrend(videoId, title) {
+            try {
+                const resp = await fetch(`${backendBase}/favorites/${videoId}/history`);
+                if (!resp.ok) throw new Error('Failed');
+                const data = await resp.json();
+                const history = (data.history || []).reverse(); // oldest first
+
+                document.getElementById('modalTitle').textContent = title || '观看量趋势';
+                document.getElementById('trendModal').classList.add('open');
+
+                if (!history.length) {
+                    document.getElementById('trendChart').innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);">暂无历史数据<br>请等待定时任务抓取</div>';
+                    return;
+                }
+
+                const chartDom = document.getElementById('trendChart');
+                chartDom.innerHTML = '';
+                if (trendChart) trendChart.dispose();
+                trendChart = echarts.init(chartDom);
+
+                trendChart.setOption({
+                    darkMode: true,
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                        type: 'category',
+                        data: history.map(h => h.recorded_at.slice(5, 16).replace('T', ' '))
+                    },
+                    yAxis: { type: 'value', name: '观看量' },
+                    series: [{
+                        type: 'line',
+                        data: history.map(h => h.view_count),
+                        smooth: true,
+                        areaStyle: { color: 'rgba(34,197,94,0.2)' },
+                        itemStyle: { color: '#22c55e' }
+                    }]
+                });
+            } catch (err) {
+                alert('加载趋势数据失败');
+            }
+        }
+
+        function closeTrendModal() {
+            document.getElementById('trendModal').classList.remove('open');
+        }
+
+        document.getElementById('trendModal').addEventListener('click', (e) => {
+            if (e.target.id === 'trendModal') closeTrendModal();
+        });
+
+        loadFavorites();
+    </script>
+</body>
+
+</html>
