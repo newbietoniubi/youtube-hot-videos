@@ -88,5 +88,51 @@ def refresh_favorites():
     print(f"✅ Updated {total_updated} videos")
 
 
+def export_to_json():
+    """Export favorites data to JSON file for frontend consumption."""
+    import json
+    from db import get_favorites, get_view_history
+    
+    favorites = get_favorites()
+    output = []
+    
+    for fav in favorites:
+        video_id = fav["video_id"]
+        history = get_view_history(video_id, limit=100)
+        
+        # Get latest stats
+        latest = history[0] if history else {}
+        
+        output.append({
+            "video_id": video_id,
+            "title": fav.get("title", ""),
+            "channel_id": fav.get("channel_id", ""),
+            "channel_title": fav.get("channel_title", ""),
+            "thumbnail_url": fav.get("thumbnail_url", ""),
+            "created_at": fav.get("created_at", ""),
+            "latest_view_count": latest.get("view_count"),
+            "latest_like_count": latest.get("like_count"),
+            "latest_comment_count": latest.get("comment_count"),
+            "last_updated": latest.get("recorded_at"),
+            "history": [
+                {
+                    "view_count": h["view_count"],
+                    "like_count": h.get("like_count"),
+                    "comment_count": h.get("comment_count"),
+                    "recorded_at": h["recorded_at"]
+                }
+                for h in history
+            ]
+        })
+    
+    # Write to project root
+    output_path = Path(__file__).resolve().parent.parent / "favorites_data.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump({"favorites": output, "updated_at": datetime.now(timezone.utc).isoformat()}, f, ensure_ascii=False, indent=2)
+    
+    print(f"📦 Exported {len(output)} favorites to {output_path}")
+
+
 if __name__ == "__main__":
     refresh_favorites()
+    export_to_json()
