@@ -462,7 +462,12 @@
                 },
                 xAxis: {
                     type: 'category',
-                    data: history.map(h => h.recorded_at.slice(5, 16).replace('T', ' ')),
+                    data: history.map(h => {
+                        // Convert UTC to Beijing time (UTC+8)
+                        const utcDate = new Date(h.recorded_at);
+                        const beijingDate = new Date(utcDate.getTime() + 8 * 60 * 60 * 1000);
+                        return beijingDate.toISOString().slice(5, 16).replace('T', ' ');
+                    }),
                     axisLabel: { color: '#9ca3af' }
                 },
                 yAxis: {
