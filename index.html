@@ -548,17 +548,18 @@
           <input id="days" type="number" value="7" placeholder="默认 7 天" />
         </div>
       </div>
+      <div class="quick-pills" id="quickPills"></div>
       <div class="mt-3 flex gap-2 flex-wrap">
         <button id="collectBtn">🚀 开始采集</button>
-        <button id="clearLog" class="secondary">清空日志</button>
       </div>
-      <div class="quick-pills" id="quickPills"></div>
       <div class="mt-3">
-        <div class="log-header" id="logToggle">
+        <div class="log-header" id="logToggle" style="display:flex; align-items:center;">
           <span class="chevron" id="chevron">▶</span>
-          <span>操作日志</span>
+          <span style="font-weight:600; margin-left:4px;">操作日志</span>
+          <button id="clearLog" class="secondary"
+            style="margin-left: auto; padding: 4px 12px; font-size: 12px; height: auto; background: rgba(255,255,255,0.9); border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: none;">清空日志</button>
         </div>
-        <pre id="log" style="display:none;"></pre>
+        <pre id="log" style="display:none; margin-top: 12px; padding: 1rem; border: 1px solid var(--border);"></pre>
       </div>
     </section>
 
@@ -611,6 +612,10 @@
     const DEFAULT_DAYS = 7;
     const QUICK_PRESETS = [
       { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
+      { label: 'jinu', keywords: ['jinu'] },
+      { label: 'rumi', keywords: ['rumi'] },
+      { label: 'mira', keywords: ['mira'] },
+      { label: 'zoey', keywords: ['zoey'] },
     ];
     const logBox = document.getElementById('log');
     const chevron = document.getElementById('chevron');
@@ -641,6 +646,8 @@
     function toggleLog() {
       logVisible = !logVisible;
       logBox.style.display = logVisible ? 'block' : 'none';
+      document.getElementById('clearLog').style.display = logVisible ? 'block' : 'none'; // Sync button visibility
+      logToggle.classList.toggle('active', logVisible);
       chevron.classList.toggle('open', logVisible);
     }
 
