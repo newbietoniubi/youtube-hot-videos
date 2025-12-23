@@ -272,17 +272,18 @@ def collect():
 
 @app.route("/favorites", methods=["GET"])
 def get_favorites_list():
-    """Get all favorites."""
+    """Get all favorites with history."""
     from db import get_favorites, get_view_history
     
     favorites = get_favorites()
-    # Attach latest stats to each favorite
+    # Attach latest stats and history to each favorite
     for fav in favorites:
-        history = get_view_history(fav["video_id"], limit=1)
+        history = get_view_history(fav["video_id"], limit=100)
         if history:
             fav["latest_view_count"] = history[0]["view_count"]
             fav["latest_like_count"] = history[0]["like_count"]
             fav["last_updated"] = history[0]["recorded_at"]
+        fav["history"] = history  # Include full history for chart rendering
     
     return jsonify({"favorites": favorites, "total": len(favorites)})
 

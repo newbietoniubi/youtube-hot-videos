@@ -80,25 +80,47 @@
 
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
         }
 
         @media (max-width: 1200px) {
             .video-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 900px) {
-            .video-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .video-row {
+            display: flex;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .video-row .video-card {
+            flex: 0 0 280px;
+            min-width: 280px;
+        }
+
+        .inline-chart {
+            flex: 1;
+            min-height: 200px;
+            background: #111827;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
 
         @media (max-width: 600px) {
-            .video-grid {
-                grid-template-columns: 1fr;
+            .video-row {
+                flex-direction: column;
+            }
+
+            .video-row .video-card {
+                flex: none;
+                min-width: auto;
+            }
+
+            .inline-chart {
+                height: 200px;
             }
         }
 
@@ -204,48 +226,6 @@
             border-radius: 8px;
             margin-top: 16px;
         }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, .7);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--panel);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 800px;
-            width: 90%;
-            max-height: 80vh;
-            overflow: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--muted);
-            font-size: 24px;
-            cursor: pointer;
-        }
     </style>
 </head>
 
@@ -270,24 +250,12 @@
         </section>
     </main>
 
-    <!-- Trend Modal -->
-    <div class="modal" id="trendModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">观看量趋势</h3>
-                <button class="modal-close" onclick="closeTrendModal()">×</button>
-            </div>
-            <div id="trendChart" class="trend-chart"></div>
-        </div>
-    </div>
-
     <script src="./assets/echarts.min.js"></script>
     <script>
         const backendBase = 'http://127.0.0.1:5000';
         // GitHub raw URL for JSON data (update with your actual repo)
         const githubJsonUrl = 'https://raw.githubusercontent.com/newbietoniubi/youtube-hot-videos/main/favorites_data.json';
         let favoritesData = [];
-        let trendChart = null;
         let dataSource = 'local'; // 'local' or 'github'
 
         function fmtCompact(n) {
@@ -363,37 +331,98 @@
             empty.style.display = 'none';
             count.textContent = `(${favoritesData.length})`;
 
-            container.innerHTML = favoritesData.map(item => {
+            container.innerHTML = favoritesData.map((item, index) => {
                 const url = `https://www.youtube.com/watch?v=${item.video_id}`;
                 const thumb = `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg`;
                 const views = item.latest_view_count ? fmtCompact(item.latest_view_count) : '暂无数据';
                 const created = (item.created_at || '').slice(0, 10);
                 const lastUpdate = item.last_updated ? item.last_updated.slice(0, 16).replace('T', ' ') : '未更新';
                 return `
-        <div class="video-card">
-          <a class="video-thumb" href="${url}" target="_blank">
-            <img src="${thumb}" alt="${escapeHtml(item.title)}">
-          </a>
-          <div class="video-body">
-            <a class="video-title" href="${url}" target="_blank">${escapeHtml(item.title)}</a>
-            <div class="video-meta">📺 ${escapeHtml(item.channel_title || '未知频道')}</div>
-            <div class="video-meta">👁️ 当前观看：${views}</div>
-            <div class="video-meta">📅 收藏于：${created}</div>
-            <div class="video-meta">🔄 更新于：${lastUpdate}</div>
-            <div class="video-actions">
-              <button class="fav-btn trend-btn" data-id="${item.video_id}">📈 趋势</button>
-              <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
+        <div class="video-row">
+          <div class="video-card">
+            <a class="video-thumb" href="${url}" target="_blank">
+              <img src="${thumb}" alt="${escapeHtml(item.title)}">
+            </a>
+            <div class="video-body">
+              <a class="video-title" href="${url}" target="_blank">${escapeHtml(item.title)}</a>
+              <div class="video-meta">📺 ${escapeHtml(item.channel_title || '未知频道')}</div>
+              <div class="video-meta">👁️ 当前观看：${views}</div>
+              <div class="video-meta">📅 收藏于：${created}</div>
+              <div class="video-meta">🔄 更新于：${lastUpdate}</div>
+              <div class="video-actions">
+                <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
+              </div>
             </div>
           </div>
+          <div class="inline-chart" id="chart-${index}"></div>
         </div>`;
             }).join('');
 
-            // Add event listeners after rendering
-            container.querySelectorAll('.trend-btn').forEach(btn => {
-                btn.onclick = () => showTrend(btn.dataset.id);
-            });
+            // Add event listeners for remove buttons
             container.querySelectorAll('.remove-btn').forEach(btn => {
                 btn.onclick = () => removeFavorite(btn.dataset.id);
+            });
+
+            // Render charts for each video
+            renderAllCharts();
+        }
+
+        function renderAllCharts() {
+            favoritesData.forEach((item, index) => {
+                const chartDom = document.getElementById(`chart-${index}`);
+                if (!chartDom) return;
+
+                const history = (item.history || []).slice().reverse(); // oldest first
+
+                if (!history.length) {
+                    chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">暂无历史数据</div>';
+                    return;
+                }
+
+                const chart = echarts.init(chartDom);
+                chart.setOption({
+                    darkMode: true,
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: params => {
+                            const p = params[0];
+                            return `${p.name}<br/>观看量: ${p.value.toLocaleString()}`;
+                        }
+                    },
+                    grid: {
+                        left: 60,
+                        right: 15,
+                        top: 20,
+                        bottom: 30
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: history.map(h => {
+                            const utcDate = new Date(h.recorded_at);
+                            const beijingDate = new Date(utcDate.getTime() + 8 * 60 * 60 * 1000);
+                            return beijingDate.toISOString().slice(5, 16).replace('T', ' ');
+                        }),
+                        axisLabel: { color: '#9ca3af', fontSize: 10 }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLabel: {
+                            color: '#9ca3af',
+                            fontSize: 10,
+                            formatter: val => val >= 1000000 ? (val / 1000000).toFixed(1) + 'M' : val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val
+                        }
+                    },
+                    series: [{
+                        type: 'line',
+                        data: history.map(h => h.view_count),
+                        smooth: true,
+                        areaStyle: { color: 'rgba(34,197,94,0.2)' },
+                        itemStyle: { color: '#22c55e' }
+                    }]
+                });
+
+                // Handle resize
+                window.addEventListener('resize', () => chart.resize());
             });
         }
 
@@ -406,97 +435,6 @@
                 alert('操作失败');
             }
         }
-
-        async function showTrend(videoId) {
-            let history = [];
-            let title = '观看量趋势';
-
-            // If using GitHub data, get history from loaded favoritesData
-            if (dataSource === 'github') {
-                const fav = favoritesData.find(f => f.video_id === videoId);
-                if (fav) {
-                    history = (fav.history || []).slice().reverse(); // oldest first
-                    title = fav.title || title;
-                }
-            } else {
-                // Fetch from local backend
-                try {
-                    const resp = await fetch(`${backendBase}/favorites/${videoId}/history`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        history = (data.history || []).reverse();
-                        title = data.video?.title || title;
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch history:', err);
-                }
-            }
-
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('trendModal').classList.add('open');
-
-            if (!history.length) {
-                document.getElementById('trendChart').innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);">暂无历史数据<br>请等待定时任务抓取</div>';
-                return;
-            }
-
-            const chartDom = document.getElementById('trendChart');
-            chartDom.innerHTML = '';
-            if (trendChart) trendChart.dispose();
-            trendChart = echarts.init(chartDom);
-
-            trendChart.setOption({
-                darkMode: true,
-                tooltip: {
-                    trigger: 'axis',
-                    formatter: params => {
-                        const p = params[0];
-                        return `${p.name}<br/>观看量: ${p.value.toLocaleString()}`;
-                    }
-                },
-                grid: {
-                    left: 80,
-                    right: 20,
-                    top: 40,
-                    bottom: 40
-                },
-                xAxis: {
-                    type: 'category',
-                    data: history.map(h => {
-                        // Convert UTC to Beijing time (UTC+8)
-                        const utcDate = new Date(h.recorded_at);
-                        const beijingDate = new Date(utcDate.getTime() + 8 * 60 * 60 * 1000);
-                        return beijingDate.toISOString().slice(5, 16).replace('T', ' ');
-                    }),
-                    axisLabel: { color: '#9ca3af' }
-                },
-                yAxis: {
-                    type: 'value',
-                    name: '观看量',
-                    nameTextStyle: { color: '#9ca3af' },
-                    axisLabel: {
-                        color: '#9ca3af',
-                        formatter: val => val >= 1000000 ? (val / 1000000).toFixed(1) + 'M' : val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val
-                    }
-                },
-                series: [{
-                    type: 'line',
-                    data: history.map(h => h.view_count),
-                    smooth: true,
-                    areaStyle: { color: 'rgba(34,197,94,0.2)' },
-                    itemStyle: { color: '#22c55e' }
-                }]
-            });
-        }
-
-
-        function closeTrendModal() {
-            document.getElementById('trendModal').classList.remove('open');
-        }
-
-        document.getElementById('trendModal').addEventListener('click', (e) => {
-            if (e.target.id === 'trendModal') closeTrendModal();
-        });
 
         loadFavorites();
     </script>
