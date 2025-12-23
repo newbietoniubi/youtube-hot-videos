@@ -80,7 +80,7 @@
 
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr;
             gap: 20px;
         }
 
@@ -103,10 +103,17 @@
 
         .inline-chart {
             flex: 1;
-            min-height: 200px;
             background: #111827;
             border-radius: 8px;
             border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .inline-chart>div {
+            width: 100%;
+            height: 200px;
         }
 
         @media (max-width: 600px) {
@@ -384,10 +391,15 @@
                     darkMode: true,
                     tooltip: {
                         trigger: 'axis',
-                        formatter: params => {
-                            const p = params[0];
-                            return `${p.name}<br/>观看量: ${p.value.toLocaleString()}`;
-                        }
+                        confine: true,
+                        appendToBody: true,
+                        backgroundColor: '#1f2937',
+                        borderColor: '#374151',
+                        borderWidth: 1,
+                        textStyle: { color: '#e5e7eb', fontSize: 12 },
+                        padding: [6, 10],
+                        extraCssText: 'max-width: 150px; white-space: nowrap;',
+                        formatter: '{b}<br/>{c}'
                     },
                     grid: {
                         left: 60,
