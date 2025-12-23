@@ -574,8 +574,8 @@
       <div class="flex items-center gap-2 mb-2">
         <label for="pageSize" class="mb-0">每页显示</label>
         <select id="pageSize" class="w-auto">
-          <option value="12" selected>12</option>
-          <option value="20">20</option>
+          <option value="12">12</option>
+          <option value="20" selected>20</option>
           <option value="50">50</option>
           <option value="100">100</option>
         </select>
@@ -612,11 +612,12 @@
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 7;
     const QUICK_PRESETS = [
-      { label: 'kpop', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
+      { label: 'kpop set', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
       { label: 'jinu', keywords: ['jinu'] },
       { label: 'rumi', keywords: ['rumi'] },
       { label: 'mira', keywords: ['mira'] },
       { label: 'zoey', keywords: ['zoey'] },
+      { label: 'kpop', keywords: ['kpop'] },
     ];
     const logBox = document.getElementById('log');
     const chevron = document.getElementById('chevron');
@@ -625,7 +626,7 @@
     let logVisible = false;
     let cachedData = [];
     let charts = {};
-    let pagination = { page: 1, pageSize: 12 };
+    let pagination = { page: 1, pageSize: 20 };
 
     const CHART_COLORS = {
       primary: '#437946',
