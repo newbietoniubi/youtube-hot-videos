@@ -91,6 +91,7 @@ def refresh_favorites():
 def export_to_json():
     """Export favorites data to JSON file for frontend consumption."""
     import json
+    from datetime import datetime, timezone
     from db import get_favorites, get_view_history
     
     favorites = get_favorites()
