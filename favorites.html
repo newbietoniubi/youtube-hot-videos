@@ -465,7 +465,11 @@
                 const thumb = `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg`;
                 const views = item.latest_view_count ? fmtCompact(item.latest_view_count) : '暂无数据';
                 const created = (item.created_at || '').slice(0, 10);
-                const lastUpdate = item.last_updated ? item.last_updated.slice(0, 16).replace('T', ' ') : '未更新';
+                const lastUpdate = item.last_updated ? (() => {
+                    const utc = new Date(item.last_updated);
+                    const beijing = new Date(utc.getTime() + 8 * 60 * 60 * 1000);
+                    return beijing.toISOString().slice(0, 16).replace('T', ' ');
+                })() : '未更新';
                 return `
         <div class="video-row">
           <div class="video-card">
@@ -476,8 +480,8 @@
               <a class="video-title" href="${url}" target="_blank">${escapeHtml(item.title)}</a>
               <div class="video-meta">📺 ${escapeHtml(item.channel_title || '未知频道')}</div>
               <div class="video-meta">👁️ 当前观看：${views}</div>
-              <div class="video-meta">📅 收藏于：${created}</div>
               <div class="video-meta">🔄 更新于：${lastUpdate}</div>
+              <div class="video-meta">📅 收藏于：${created}</div>
               <div class="video-actions">
                 <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
               </div>
