@@ -304,7 +304,8 @@ def add_favorite():
         title=payload.get("title", ""),
         channel_id=payload.get("channel_id", ""),
         channel_title=payload.get("channel_title", ""),
-        thumbnail_url=payload.get("thumbnail_url", "")
+        thumbnail_url=payload.get("thumbnail_url", ""),
+        published_at=payload.get("published_at", "")
     )
     
     # Record initial view count if provided

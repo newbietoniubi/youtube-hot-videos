@@ -470,6 +470,7 @@
                     const beijing = new Date(utc.getTime() + 8 * 60 * 60 * 1000);
                     return beijing.toISOString().slice(0, 16).replace('T', ' ');
                 })() : '未更新';
+                const published = (item.published_at || '').replace('T', ' ').replace('Z', '').slice(0, 10);
                 return `
         <div class="video-row">
           <div class="video-card">
@@ -482,6 +483,7 @@
               <div class="video-meta">👁️ 当前观看：${views}</div>
               <div class="video-meta">🔄 更新于：${lastUpdate}</div>
               <div class="video-meta">📅 收藏于：${created}</div>
+              ${published ? `<div class="video-meta">🎬 发布于：${published}</div>` : ''}
               <div class="video-actions">
                 <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
               </div>

@@ -34,9 +34,17 @@ def init_db() -> None:
             channel_title TEXT,
             thumbnail_url TEXT,
             created_at TEXT NOT NULL,
-            is_active INTEGER DEFAULT 1
+            is_active INTEGER DEFAULT 1,
+            published_at TEXT
         )
     """)
+    
+    # Check for missing columns (migration)
+    cursor.execute("PRAGMA table_info(favorites)")
+    columns = [info[1] for info in cursor.fetchall()]
+    if "published_at" not in columns:
+        print("⚠️ Migrating database: Adding 'published_at' column to favorites table...")
+        cursor.execute("ALTER TABLE favorites ADD COLUMN published_at TEXT")
     
     # View history table
     cursor.execute("""
@@ -66,7 +74,8 @@ def add_favorite(
     title: str,
     channel_id: str = "",
     channel_title: str = "",
-    thumbnail_url: str = ""
+    thumbnail_url: str = "",
+    published_at: str = ""
 ) -> Dict:
     """Add a video to favorites."""
     conn = get_connection()
@@ -76,9 +85,9 @@ def add_favorite(
     
     try:
         cursor.execute("""
-            INSERT INTO favorites (video_id, title, channel_id, channel_title, thumbnail_url, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (video_id, title, channel_id, channel_title, thumbnail_url, now))
+            INSERT INTO favorites (video_id, title, channel_id, channel_title, thumbnail_url, created_at, published_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (video_id, title, channel_id, channel_title, thumbnail_url, now, published_at))
         conn.commit()
         return {"success": True, "video_id": video_id}
     except sqlite3.IntegrityError:

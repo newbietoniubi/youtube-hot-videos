@@ -111,6 +111,7 @@ def export_to_json():
             "channel_title": fav.get("channel_title", ""),
             "thumbnail_url": fav.get("thumbnail_url", ""),
             "created_at": fav.get("created_at", ""),
+            "published_at": fav.get("published_at", ""),
             "latest_view_count": latest.get("view_count"),
             "latest_like_count": latest.get("like_count"),
             "latest_comment_count": latest.get("comment_count"),
