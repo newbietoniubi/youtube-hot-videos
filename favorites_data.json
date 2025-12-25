@@ -7,11 +7,17 @@
       "channel_title": "Reborn Night",
       "thumbnail_url": "",
       "created_at": "2025-12-23T03:33:28.995908+00:00",
-      "latest_view_count": 17901536,
-      "latest_like_count": 112426,
+      "latest_view_count": 18194127,
+      "latest_like_count": 113725,
       "latest_comment_count": 287,
-      "last_updated": "2025-12-24T12:58:04.086171+00:00",
+      "last_updated": "2025-12-25T02:19:40.329668+00:00",
       "history": [
+        {
+          "view_count": 18194127,
+          "like_count": 113725,
+          "comment_count": 287,
+          "recorded_at": "2025-12-25T02:19:40.329668+00:00"
+        },
         {
           "view_count": 17901536,
           "like_count": 112426,
@@ -57,11 +63,17 @@
       "channel_title": "Cuddly Kitten Tales",
       "thumbnail_url": "",
       "created_at": "2025-12-23T03:33:20.527144+00:00",
-      "latest_view_count": 27143592,
-      "latest_like_count": 230154,
-      "latest_comment_count": 117,
-      "last_updated": "2025-12-24T12:58:04.088540+00:00",
+      "latest_view_count": 29190873,
+      "latest_like_count": 247250,
+      "latest_comment_count": 126,
+      "last_updated": "2025-12-25T02:19:40.333202+00:00",
       "history": [
+        {
+          "view_count": 29190873,
+          "like_count": 247250,
+          "comment_count": 126,
+          "recorded_at": "2025-12-25T02:19:40.333202+00:00"
+        },
         {
           "view_count": 27143592,
           "like_count": 230154,
@@ -113,11 +125,17 @@
       "channel_title": "Cuddly Kitten Tales",
       "thumbnail_url": "",
       "created_at": "2025-12-23T03:33:12.801291+00:00",
-      "latest_view_count": 31572854,
-      "latest_like_count": 234515,
-      "latest_comment_count": 174,
-      "last_updated": "2025-12-24T12:58:04.089675+00:00",
+      "latest_view_count": 33902353,
+      "latest_like_count": 250434,
+      "latest_comment_count": 185,
+      "last_updated": "2025-12-25T02:19:40.334214+00:00",
       "history": [
+        {
+          "view_count": 33902353,
+          "like_count": 250434,
+          "comment_count": 185,
+          "recorded_at": "2025-12-25T02:19:40.334214+00:00"
+        },
         {
           "view_count": 31572854,
           "like_count": 234515,
@@ -157,5 +175,5 @@
       ]
     }
   ],
-  "updated_at": "2025-12-24T12:58:04.091960+00:00"
+  "updated_at": "2025-12-25T02:19:40.336102+00:00"
 }
