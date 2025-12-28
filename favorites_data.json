@@ -8,11 +8,17 @@
       "thumbnail_url": "",
       "created_at": "2025-12-23T03:33:28.995908+00:00",
       "published_at": null,
-      "latest_view_count": 18212846,
-      "latest_like_count": 113719,
+      "latest_view_count": 18213349,
+      "latest_like_count": 113712,
       "latest_comment_count": 287,
-      "last_updated": "2025-12-28T02:31:32.380245+00:00",
+      "last_updated": "2025-12-28T12:56:01.076922+00:00",
       "history": [
+        {
+          "view_count": 18213349,
+          "like_count": 113712,
+          "comment_count": 287,
+          "recorded_at": "2025-12-28T12:56:01.076922+00:00"
+        },
         {
           "view_count": 18212846,
           "like_count": 113719,
@@ -101,11 +107,17 @@
       "thumbnail_url": "",
       "created_at": "2025-12-23T03:33:20.527144+00:00",
       "published_at": null,
-      "latest_view_count": 29472311,
-      "latest_like_count": 248459,
+      "latest_view_count": 29494850,
+      "latest_like_count": 248650,
       "latest_comment_count": 128,
-      "last_updated": "2025-12-28T02:31:32.382322+00:00",
+      "last_updated": "2025-12-28T12:56:01.079336+00:00",
       "history": [
+        {
+          "view_count": 29494850,
+          "like_count": 248650,
+          "comment_count": 128,
+          "recorded_at": "2025-12-28T12:56:01.079336+00:00"
+        },
         {
           "view_count": 29472311,
           "like_count": 248459,
@@ -200,11 +212,17 @@
       "thumbnail_url": "",
       "created_at": "2025-12-23T03:33:12.801291+00:00",
       "published_at": null,
-      "latest_view_count": 34237977,
-      "latest_like_count": 252212,
+      "latest_view_count": 34256415,
+      "latest_like_count": 252378,
       "latest_comment_count": 186,
-      "last_updated": "2025-12-28T02:31:32.383372+00:00",
+      "last_updated": "2025-12-28T12:56:01.081952+00:00",
       "history": [
+        {
+          "view_count": 34256415,
+          "like_count": 252378,
+          "comment_count": 186,
+          "recorded_at": "2025-12-28T12:56:01.081952+00:00"
+        },
         {
           "view_count": 34237977,
           "like_count": 252212,
@@ -286,5 +304,5 @@
       ]
     }
   ],
-  "updated_at": "2025-12-28T02:31:32.385286+00:00"
+  "updated_at": "2025-12-28T12:56:01.083956+00:00"
 }
