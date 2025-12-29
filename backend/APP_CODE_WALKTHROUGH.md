@@ -93,38 +93,7 @@
 - **Line 45**: `build_published_after` 函数计算“几天前”的时间戳，用于 API 查询参数。
 - **Lines 48-50**: 获取当前 UTC 时间，减去指定天数，并格式化为 YouTube API 要求的 RFC 3339 格式（以 `Z` 结尾）。
 
-```python
-53: def within_days(published_at: str, days: int | None) -> bool:
-...
-60:     return dt >= datetime.now(timezone.utc) - timedelta(days=days)
-```
-- **Line 53**: `within_days` 函数用于手动检查视频发布时间是否在指定天数内（用于 API 无法过滤时的二次校验）。
-- **Lines 57-60**: 将视频发布时间字符串解析为 datetime 对象，并与截止时间比较。
-
-## 3. YouTube API 调用：获取热门视频 (Lines 63-118)
-
-*注意：此函数 `fetch_most_popular` 目前在代码中定义了但未被 `/collect` 路由直接使用。它可能是为了实现“获取由于无关键词的热门 Shorts”而预留的功能。*
-
-```python
-63: def fetch_most_popular(max_results: int, days: int | None, region: str = "US") -> List[Dict]:
-...
-69:         params = {
-70:             "key": API_KEY,
-71:             "part": "snippet,contentDetails,statistics",
-72:             "chart": "mostPopular",
-73:             "regionCode": region,
-74:             "maxResults": per_page,
-75:         }
-...
-79:         resp = requests.get("https://www.googleapis.com/youtube/v3/videos", params=params, timeout=15)
-```
-- **Line 63**: 定义函数，参数包括最大结果数、天数限制和地区代码。
-- **Terms**:
-  - `part`: 指定 API 返回哪些字段（摘要、详情、统计）。
-  - `chart`: `mostPopular` 表示获取当前热门视频。
-- **Line 79**: 调用 `videos` 端点。
-
-## 4. YouTube API 调用：按关键词搜索 Shorts (Lines 124-205)
+## 3. YouTube API 调用：按关键词搜索 Shorts (Lines 124-205)
 
 这是核心的数据获取逻辑。
 

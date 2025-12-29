@@ -14,7 +14,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app import (
     parse_iso_duration,
     build_published_after,
-    within_days,
 )
 
 
@@ -74,34 +73,6 @@ class TestBuildPublishedAfter:
         # Should be parseable as ISO format
         parsed = datetime.fromisoformat(result.replace("Z", "+00:00"))
         assert isinstance(parsed, datetime)
-
-
-class TestWithinDays:
-    """Tests for within_days function."""
-
-    def test_none_days_always_true(self):
-        assert within_days("2020-01-01T00:00:00Z", None) is True
-        assert within_days("2025-12-01T00:00:00Z", None) is True
-
-    def test_recent_date_within_days(self):
-        # A date from 1 day ago should be within 7 days
-        recent = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat().replace("+00:00", "Z")
-        assert within_days(recent, 7) is True
-
-    def test_old_date_outside_days(self):
-        # A date from 30 days ago should NOT be within 7 days
-        old = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat().replace("+00:00", "Z")
-        assert within_days(old, 7) is False
-
-    def test_boundary_exactly_on_edge(self):
-        # Exactly 7 days ago (with some tolerance)
-        edge = (datetime.now(timezone.utc) - timedelta(days=7, seconds=1)).isoformat().replace("+00:00", "Z")
-        assert within_days(edge, 7) is False
-
-    def test_invalid_date_returns_true(self):
-        # Invalid dates should return True (permissive behavior)
-        assert within_days("not-a-date", 7) is True
-        assert within_days("", 7) is True
 
 
 class TestCollectEndpoint:
