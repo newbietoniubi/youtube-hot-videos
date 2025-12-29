@@ -148,51 +148,25 @@
 
         .video-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 1.5rem;
         }
 
-        .video-row {
-            display: flex;
-            gap: 1rem;
-            align-items: stretch;
+        @media (max-width: 1200px) {
+            .video-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
         }
 
-        .video-row .video-card {
-            flex: 0 0 280px;
-            min-width: 280px;
-        }
-
-        .inline-chart {
-            flex: 1;
-            background: #fff;
-            /* White to match video-card */
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            /* Fix round corners */
-        }
-
-        .inline-chart>div {
-            width: 100%;
-            height: 200px;
+        @media (max-width: 900px) {
+            .video-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
         @media (max-width: 600px) {
-            .video-row {
-                flex-direction: column;
-            }
-
-            .video-row .video-card {
-                flex: none;
-                min-width: auto;
-            }
-
-            .inline-chart {
-                height: 200px;
+            .video-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -205,6 +179,9 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
             /* Lighter shadow */
             transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 420px;
         }
 
         .video-card:hover {
@@ -212,13 +189,24 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
+        .video-thumb {
+            display: block;
+            height: 200px;
+            overflow: hidden;
+        }
+
         .video-thumb img {
             width: 100%;
+            height: 100%;
+            object-fit: cover;
             display: block;
         }
 
         .video-body {
-            padding: 1rem;
+            padding: 0.75rem 1rem 0.9rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
         }
 
         .video-title {
@@ -227,8 +215,13 @@
             color: var(--text);
             text-decoration: none;
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.35rem;
             font-size: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: calc(1.4em * 2);
         }
 
         .video-title:hover {
@@ -239,13 +232,20 @@
         .video-meta {
             font-size: 0.8125rem;
             color: var(--muted);
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
         }
 
         .video-actions {
             display: flex;
             gap: 0.5rem;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
+            padding-top: 0.25rem;
+        }
+
+        @media (max-width: 600px) {
+            .video-card {
+                height: auto;
+            }
         }
 
         .fav-btn {
@@ -271,57 +271,6 @@
             border-color: #ef4444;
             color: #ef4444;
             background: #fff;
-        }
-
-        .empty {
-            text-align: center;
-            color: var(--muted);
-            padding: 2.5rem;
-            font-size: 1rem;
-        }
-
-        .stats-row {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-            align-items: stretch;
-        }
-
-        .stat-item {
-            background: #EBE9E2;
-            /* Matches index.html stat */
-            padding: 1rem;
-            border-radius: 1rem;
-            border: 1px solid transparent;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .stat-label {
-            font-size: 0.8125rem;
-            color: var(--muted);
-            height: 1.5rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .stat-value {
-            font-size: 1.375rem;
-            font-weight: 700;
-            margin-top: 0.25rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            min-height: 2rem;
-        }
-
-        .trend-chart {
-            height: 300px;
-            background: var(--panel);
-            border-radius: 1rem;
-            margin-top: 1rem;
-            border: 1px solid var(--border);
         }
 
         /* Utilities */
@@ -351,25 +300,14 @@
     </header>
 
     <main>
-        <div class="stats-row" id="statsRow"></div>
-
         <section class="card">
-            <h3>收藏视频列表 <span id="favCount" style="font-size:14px;color:var(--muted);"></span></h3>
+            <h3>收藏视频列表</h3>
             <div class="video-grid" id="favoritesGrid"></div>
-            <div id="emptyState" class="empty" style="display:none;">
-                还没有收藏任何视频<br>
-                <a href="index.html" style="color:#38bdf8;">返回首页添加收藏</a>
-            </div>
         </section>
     </main>
-
-    <script src="./assets/echarts.min.js"></script>
     <script>
         const backendBase = 'http://127.0.0.1:5000';
-        // GitHub raw URL for JSON data (update with your actual repo)
-        const githubJsonUrl = 'https://raw.githubusercontent.com/newbietoniubi/youtube-hot-videos/main/favorites_data.json';
         let favoritesData = [];
-        let dataSource = 'local'; // 'local' or 'github'
 
         function fmtCompact(n) {
             const num = Number(n) || 0;
@@ -383,96 +321,38 @@
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
         }
 
-        async function loadFavorites() {
-            // Try GitHub first
-            try {
-                const resp = await fetch(githubJsonUrl);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    favoritesData = data.favorites || [];
-                    dataSource = 'github';
-                    console.log('Loaded from GitHub, updated:', data.updated_at);
-                    renderStats(data.updated_at);
-                    renderFavorites();
-                    return;
-                }
-            } catch (err) {
-                console.log('GitHub fetch failed, trying local JSON...');
-            }
-
-            // Try local JSON file (generated by GitHub Actions and synced via git pull)
-            try {
-                const resp = await fetch('./favorites_data.json');
-                if (resp.ok) {
-                    const data = await resp.json();
-                    favoritesData = data.favorites || [];
-                    dataSource = 'local-json';
-                    console.log('Loaded from local JSON, updated:', data.updated_at);
-                    renderStats(data.updated_at);
-                    renderFavorites();
-                    return;
-                }
-            } catch (err) {
-                console.log('Local JSON fetch failed, trying backend API...');
-            }
-
-            // Fallback to local backend API
-            try {
-                const resp = await fetch(`${backendBase}/favorites`);
-                if (!resp.ok) throw new Error('Failed to load');
-                const data = await resp.json();
-                favoritesData = data.favorites || [];
-                dataSource = 'local';
-                renderStats();
-                renderFavorites();
-            } catch (err) {
-                console.error('Load error:', err);
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('emptyState').innerHTML = '无法加载数据<br><small style="color:#9ca3af;">请执行 git pull 获取最新数据，或启动本地后端</small>';
-            }
-        }
-
-        function renderStats(updatedAt) {
-            const total = favoritesData.length;
-            const withData = favoritesData.filter(f => f.latest_view_count).length;
-            const sourceLabel = dataSource === 'github' ? '☁️ GitHub' : dataSource === 'local-json' ? '📁 本地文件' : '💻 后端API';
-            const updateInfo = updatedAt ? new Date(updatedAt).toLocaleString('zh-CN') : '';
-            document.getElementById('statsRow').innerHTML = `
-        <div class="stat-item"><div class="stat-label">收藏总数</div><div class="stat-value">${total}</div></div>
-        <div class="stat-item"><div class="stat-label">有追踪数据</div><div class="stat-value">${withData}</div></div>
-        <div class="stat-item"><div class="stat-label">数据来源</div><div class="stat-value" style="font-size:14px;">${sourceLabel}</div></div>
-        ${updateInfo ? `<div class="stat-item"><div class="stat-label">更新时间</div><div class="stat-value" style="font-size:14px;">${updateInfo}</div></div>` : ''}
-      `;
+        function formatLastUpdate(value) {
+            if (!value) return '未更新';
+            const utc = new Date(value);
+            const beijing = new Date(utc.getTime() + 8 * 60 * 60 * 1000);
+            return beijing.toISOString().slice(0, 16).replace('T', ' ');
         }
 
         function renderFavorites() {
             const container = document.getElementById('favoritesGrid');
-            const empty = document.getElementById('emptyState');
-            const count = document.getElementById('favCount');
 
             if (!favoritesData.length) {
-                container.innerHTML = '';
-                empty.style.display = 'block';
-                count.textContent = '';
+                container.innerHTML = `
+          <div class="video-card">
+            <div class="video-body">
+              <div class="video-title">暂无收藏</div>
+              <div class="video-meta">在首页收藏后刷新此页即可展示</div>
+            </div>
+          </div>`;
                 return;
             }
 
-            empty.style.display = 'none';
-            count.textContent = `(${favoritesData.length})`;
-
-            container.innerHTML = favoritesData.map((item, index) => {
-                const url = `https://www.youtube.com/watch?v=${item.video_id}`;
-                const thumb = `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg`;
-                const views = item.latest_view_count ? fmtCompact(item.latest_view_count) : '暂无数据';
+            container.innerHTML = favoritesData.map(item => {
+                const url = item.video_id ? `https://www.youtube.com/watch?v=${item.video_id}` : '#';
+                const thumb = item.thumbnail_url || (item.video_id ? `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg` : '');
+                const viewsRaw = item.latest_view_count !== undefined && item.latest_view_count !== null
+                    ? item.latest_view_count
+                    : item.view_count;
+                const views = viewsRaw ? fmtCompact(viewsRaw) : '暂无数据';
                 const created = (item.created_at || '').slice(0, 10);
-                const lastUpdate = item.last_updated ? (() => {
-                    const utc = new Date(item.last_updated);
-                    const beijing = new Date(utc.getTime() + 8 * 60 * 60 * 1000);
-                    return beijing.toISOString().slice(0, 16).replace('T', ' ');
-                })() : '未更新';
+                const lastUpdate = formatLastUpdate(item.last_updated);
                 const published = (item.published_at || '').replace('T', ' ').replace('Z', '').slice(0, 10);
                 return `
-        <div class="video-row">
           <div class="video-card">
             <a class="video-thumb" href="${url}" target="_blank">
               <img src="${thumb}" alt="${escapeHtml(item.title)}">
@@ -485,101 +365,24 @@
               <div class="video-meta">📅 收藏于：${created}</div>
               ${published ? `<div class="video-meta">🎬 发布于：${published}</div>` : ''}
               <div class="video-actions">
-                <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
+                <button class="fav-btn danger">❌ 取消收藏</button>
               </div>
             </div>
-          </div>
-          <div class="inline-chart" id="chart-${index}"></div>
-        </div>`;
+          </div>`;
             }).join('');
-
-            // Add event listeners for remove buttons
-            container.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.onclick = () => removeFavorite(btn.dataset.id);
-            });
-
-            // Render charts for each video
-            renderAllCharts();
         }
 
-        function renderAllCharts() {
-            favoritesData.forEach((item, index) => {
-                const chartDom = document.getElementById(`chart-${index}`);
-                if (!chartDom) return;
-
-                const history = (item.history || []).slice().reverse(); // oldest first
-
-                if (!history.length) {
-                    chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);">暂无历史数据</div>';
-                    return;
-                }
-
-                const chart = echarts.init(chartDom);
-                chart.setOption({
-                    grid: {
-                        left: 50, /* Compact grid */
-                        right: 15,
-                        top: 20,
-                        bottom: 30
-                    },
-                    tooltip: {
-                        trigger: 'axis',
-                        confine: true,
-                        appendToBody: true,
-                        backgroundColor: '#F7F6F2', /* --panel */
-                        borderColor: '#E6E4DC', /* --border */
-                        borderWidth: 1,
-                        textStyle: { color: '#2C2C2A', fontSize: 12 }, /* --text */
-                        padding: [6, 10],
-                        extraCssText: 'box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px;'
-                    },
-                    xAxis: {
-                        type: 'category',
-                        data: history.map(h => {
-                            const utcDate = new Date(h.recorded_at);
-                            const beijingDate = new Date(utcDate.getTime() + 8 * 60 * 60 * 1000);
-                            return beijingDate.toISOString().slice(5, 16).replace('T', ' ');
-                        }),
-                        axisLine: { lineStyle: { color: '#E6E4DC' } }, /* --border */
-                        axisLabel: { color: '#888880', fontSize: 10 } /* --muted */
-                    },
-                    yAxis: {
-                        type: 'value',
-                        splitLine: { lineStyle: { type: 'dashed', color: '#E6E4DC' } },
-                        axisLabel: {
-                            color: '#888880',
-                            fontSize: 10,
-                            formatter: val => val >= 1000000 ? (val / 1000000).toFixed(1) + 'M' : val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val
-                        }
-                    },
-                    series: [{
-                        type: 'line',
-                        data: history.map(h => h.view_count),
-                        smooth: true,
-                        /* symbol: 'none', removed to show data points */
-                        lineStyle: { width: 3, color: '#437946' }, /* --primary */
-                        areaStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(67, 121, 70, 0.4)' },
-                                { offset: 1, color: 'rgba(67, 121, 70, 0.05)' }
-                            ])
-                        }
-                    }]
-                });
-
-                // Handle resize
-                window.addEventListener('resize', () => chart.resize());
-            });
-        }
-
-        async function removeFavorite(videoId) {
-            if (!confirm('确定取消收藏？')) return;
+        async function loadFavorites() {
             try {
-                await fetch(`${backendBase}/favorites/${videoId}`, { method: 'DELETE' });
-                await loadFavorites();
+                const resp = await fetch(`${backendBase}/favorites`);
+                if (!resp.ok) throw new Error('Failed to load');
+                const data = await resp.json();
+                favoritesData = data.favorites || [];
             } catch (err) {
-                alert('操作失败');
+                console.error('Load favorites error:', err);
+                favoritesData = [];
             }
+            renderFavorites();
         }
 
         loadFavorites();
