@@ -22,6 +22,22 @@
 
     * {
       box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: #c9c5b7 var(--bg);
+    }
+
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #c9c5b7;
+      border-radius: 999px;
+      border: 3px solid var(--bg);
     }
 
     html {
@@ -526,8 +542,8 @@
       <div style="font-weight: 700; font-size: 1.125rem;">YouTube Shorts 分析仪表板</div>
     </div>
     <div class="flex gap-2 flex-wrap items-center">
-      <a href="favorites.html" class="secondary no-underline inline-block">⭐ 我的收藏</a>
       <button id="exportBtn" class="secondary">导出报告</button>
+      <a href="favorites.html" class="secondary no-underline inline-block">⭐ 我的收藏</a>
     </div>
   </header>
 

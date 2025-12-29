@@ -23,10 +23,27 @@
 
         * {
             box-sizing: border-box;
+            scrollbar-width: thin;
+            scrollbar-color: #c9c5b7 var(--bg);
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #c9c5b7;
+            border-radius: 999px;
+            border: 3px solid var(--bg);
         }
 
         html {
             font-size: 16px;
+            overflow-y: scroll;
         }
 
         body {
@@ -76,19 +93,6 @@
             z-index: 10;
         }
 
-        header a {
-            color: var(--text);
-            text-decoration: none;
-            margin-left: 1rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: color 0.2s;
-        }
-
-        header a:hover {
-            color: var(--primary);
-        }
-
         button {
             background: var(--primary);
             color: #fff;
@@ -128,8 +132,6 @@
 
         main {
             padding: 1rem 1.5rem;
-            max-width: 1400px;
-            margin: 0 auto;
             display: grid;
             gap: 1rem;
         }
@@ -285,6 +287,18 @@
         .gap-2 {
             gap: 0.5rem;
         }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .inline-block {
+            display: inline-block;
+        }
+
+        .no-underline {
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -294,9 +308,10 @@
             <img src="./assets/logo.png" alt="Logo" style="width: 2.8rem; height: auto; border-radius: 6px;">
             <div style="font-weight: 700; font-size: 1.125rem;">我的收藏</div>
         </div>
-        <nav>
-            <a href="index.html" class="secondary">← 返回首页</a>
-        </nav>
+        <div class="flex gap-2 flex-wrap items-center">
+            <button id="refreshBtn" class="secondary" type="button">🔄 刷新数据</button>
+            <a href="index.html" class="secondary no-underline inline-block">← 返回首页</a>
+        </div>
     </header>
 
     <main>
@@ -365,11 +380,45 @@
               <div class="video-meta">📅 收藏于：${created}</div>
               ${published ? `<div class="video-meta">🎬 发布于：${published}</div>` : ''}
               <div class="video-actions">
-                <button class="fav-btn danger">❌ 取消收藏</button>
+                <button class="fav-btn danger remove-btn" data-id="${item.video_id}">❌ 取消收藏</button>
               </div>
             </div>
           </div>`;
             }).join('');
+
+            container.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.onclick = () => removeFavorite(btn.dataset.id);
+            });
+        }
+
+        async function removeFavorite(videoId) {
+            if (!confirm('确定取消收藏？')) return;
+            try {
+                const resp = await fetch(`${backendBase}/favorites/${videoId}`, { method: 'DELETE' });
+                if (!resp.ok) throw new Error('Failed to remove');
+                await loadFavorites();
+            } catch (err) {
+                console.error('Remove favorite error:', err);
+                alert('取消收藏失败');
+            }
+        }
+
+        async function refreshAll() {
+            if (!refreshBtn) return;
+            const originalText = refreshBtn.textContent;
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '刷新中...';
+            try {
+                const resp = await fetch(`${backendBase}/favorites/refresh`, { method: 'POST' });
+                if (!resp.ok) throw new Error('Failed to refresh');
+                await loadFavorites();
+            } catch (err) {
+                console.error('Refresh favorites error:', err);
+                alert('刷新失败，请确认后端和 API_KEY');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = originalText;
+            }
         }
 
         async function loadFavorites() {
@@ -383,6 +432,11 @@
                 favoritesData = [];
             }
             renderFavorites();
+        }
+
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.onclick = refreshAll;
         }
 
         loadFavorites();
