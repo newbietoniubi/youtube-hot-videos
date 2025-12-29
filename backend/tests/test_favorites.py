@@ -166,6 +166,28 @@ class TestFavoritesAPI:
         response = client.get('/favorites/nonexistent/history')
         assert response.status_code == 404
 
+    def test_refresh_favorites_updates_stats(self, client, monkeypatch):
+        import app
+
+        monkeypatch.setattr(app, "API_KEY", "test")
+        client.post('/favorites', json={'video_id': 'v1', 'title': 'Test'})
+
+        def mock_fetch_video_stats(video_ids):
+            return {"v1": {"view_count": 123, "like_count": 5, "comment_count": 1}}
+
+        monkeypatch.setattr(app, "fetch_video_stats", mock_fetch_video_stats)
+
+        response = client.post('/favorites/refresh')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["total"] == 1
+        assert data["updated"] == 1
+
+        history_resp = client.get('/favorites/v1/history')
+        assert history_resp.status_code == 200
+        history = history_resp.get_json()["history"]
+        assert history[0]["view_count"] == 123
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

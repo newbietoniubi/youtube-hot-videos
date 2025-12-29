@@ -133,6 +133,29 @@ def fetch_shorts(keywords: str, max_results: int, days: int | None, region: str 
     return sorted(collected, key=lambda x: x.get('view_count', 0), reverse=True)[:max_results]
 
 
+def fetch_video_stats(video_ids: List[str]) -> Dict[str, Dict]:
+    if not video_ids:
+        return {}
+    params = {
+        "key": API_KEY,
+        "part": "statistics",
+        "id": ",".join(video_ids),
+    }
+    resp = requests.get("https://www.googleapis.com/youtube/v3/videos", params=params, timeout=15)
+    if resp.status_code != 200:
+        raise RuntimeError(f"YouTube videos lookup failed: {resp.status_code} {resp.text}")
+    data = resp.json()
+    result: Dict[str, Dict] = {}
+    for item in data.get("items", []):
+        stats = item.get("statistics", {})
+        result[item.get("id")] = {
+            "view_count": int(stats.get("viewCount", 0)),
+            "like_count": int(stats.get("likeCount", 0)),
+            "comment_count": int(stats.get("commentCount", 0)),
+        }
+    return result
+
+
 def save_data(records: List[Dict]) -> Dict:
     DATA_FILE.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
     preview = records[:3]
@@ -247,6 +270,42 @@ def add_favorite():
         )
     
     return jsonify(result)
+
+
+@app.route("/favorites/refresh", methods=["POST"])
+def refresh_favorites():
+    """Refresh stats for all active favorites."""
+    if not API_KEY:
+        return jsonify({"error": "API_KEY is not configured in environment"}), 500
+
+    from db import get_favorites, record_view_count
+
+    favorites = get_favorites()
+    video_ids = [fav.get("video_id") for fav in favorites if fav.get("video_id")]
+    if not video_ids:
+        return jsonify({"total": 0, "updated": 0, "missing": []})
+
+    batch_size = 50
+    updated = 0
+    missing: List[str] = []
+
+    for i in range(0, len(video_ids), batch_size):
+        batch = video_ids[i:i + batch_size]
+        stats = fetch_video_stats(batch)
+        for video_id in batch:
+            video_stats = stats.get(video_id)
+            if not video_stats:
+                missing.append(video_id)
+                continue
+            record_view_count(
+                video_id=video_id,
+                view_count=video_stats["view_count"],
+                like_count=video_stats.get("like_count"),
+                comment_count=video_stats.get("comment_count"),
+            )
+            updated += 1
+
+    return jsonify({"total": len(video_ids), "updated": updated, "missing": missing})
 
 
 @app.route("/favorites/<video_id>", methods=["DELETE"])
