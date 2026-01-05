@@ -107,6 +107,21 @@ class TestFavoritesDB:
         assert len(active) == 1
         assert active[0]["video_id"] == "v1"
 
+    def test_update_favorite_metadata(self):
+        from db import add_favorite, update_favorite_metadata, get_favorites
+        
+        add_favorite(video_id="v1", title="Video 1")
+        
+        # Initially no published_at
+        favorites = get_favorites()
+        assert favorites[0].get("published_at") == "" or favorites[0].get("published_at") is None
+        
+        # Update metadata
+        update_favorite_metadata("v1", published_at="2023-01-01T00:00:00Z")
+        
+        favorites = get_favorites()
+        assert favorites[0]["published_at"] == "2023-01-01T00:00:00Z"
+
 
 class TestFavoritesAPI:
     """Tests for favorites API endpoints."""
@@ -173,7 +188,14 @@ class TestFavoritesAPI:
         client.post('/favorites', json={'video_id': 'v1', 'title': 'Test'})
 
         def mock_fetch_video_stats(video_ids):
-            return {"v1": {"view_count": 123, "like_count": 5, "comment_count": 1}}
+            return {
+                "v1": {
+                    "view_count": 123, 
+                    "like_count": 5, 
+                    "comment_count": 1,
+                    "published_at": "2023-01-01T00:00:00Z"
+                }
+            }
 
         monkeypatch.setattr(app, "fetch_video_stats", mock_fetch_video_stats)
 
@@ -187,6 +209,11 @@ class TestFavoritesAPI:
         assert history_resp.status_code == 200
         history = history_resp.get_json()["history"]
         assert history[0]["view_count"] == 123
+        
+        # Verify published_at was updated
+        fav_resp = client.get('/favorites')
+        fav_data = fav_resp.get_json()["favorites"]
+        assert fav_data[0]["published_at"] == "2023-01-01T00:00:00Z"
 
 
 if __name__ == "__main__":

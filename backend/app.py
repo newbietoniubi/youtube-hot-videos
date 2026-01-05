@@ -130,7 +130,47 @@ def fetch_shorts(keywords: str, max_results: int, days: int | None, region: str 
         if not page_token:
             break
 
+
+    # Enrich with channel stats (subscriber count)
+    channel_ids = list({item["channel_id"] for item in collected if item.get("channel_id")})
+    channel_stats = fetch_channel_stats(channel_ids)
+    
+    for item in collected:
+        cid = item.get("channel_id")
+        if cid and cid in channel_stats:
+            item["subscriber_count"] = channel_stats[cid]
+
     return sorted(collected, key=lambda x: x.get('view_count', 0), reverse=True)[:max_results]
+
+
+def fetch_channel_stats(channel_ids: List[str]) -> Dict[str, int]:
+    """Fetch subscriber counts for a list of channel IDs."""
+    if not channel_ids:
+        return {}
+    
+    result = {}
+    # API limit is 50 ids per request
+    for i in range(0, len(channel_ids), 50):
+        batch = channel_ids[i:i+50]
+        params = {
+            "key": API_KEY,
+            "part": "statistics",
+            "id": ",".join(batch),
+        }
+        try:
+            resp = requests.get("https://www.googleapis.com/youtube/v3/channels", params=params, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                for item in data.get("items", []):
+                    stats = item.get("statistics", {})
+                    # subscriberCount is often hidden (null) or string
+                    sub_count = stats.get("subscriberCount")
+                    if sub_count:
+                        result[item["id"]] = int(sub_count)
+        except Exception as e:
+            print(f"Error fetching channel stats: {e}")
+            
+    return result
 
 
 def fetch_video_stats(video_ids: List[str]) -> Dict[str, Dict]:
@@ -138,7 +178,7 @@ def fetch_video_stats(video_ids: List[str]) -> Dict[str, Dict]:
         return {}
     params = {
         "key": API_KEY,
-        "part": "statistics",
+        "part": "statistics,snippet",
         "id": ",".join(video_ids),
     }
     resp = requests.get("https://www.googleapis.com/youtube/v3/videos", params=params, timeout=15)
@@ -148,10 +188,12 @@ def fetch_video_stats(video_ids: List[str]) -> Dict[str, Dict]:
     result: Dict[str, Dict] = {}
     for item in data.get("items", []):
         stats = item.get("statistics", {})
+        snippet = item.get("snippet", {})
         result[item.get("id")] = {
             "view_count": int(stats.get("viewCount", 0)),
             "like_count": int(stats.get("likeCount", 0)),
             "comment_count": int(stats.get("commentCount", 0)),
+            "published_at": snippet.get("publishedAt"),
         }
     return result
 
@@ -278,7 +320,7 @@ def refresh_favorites():
     if not API_KEY:
         return jsonify({"error": "API_KEY is not configured in environment"}), 500
 
-    from db import get_favorites, record_view_count
+    from db import get_favorites, record_view_count, update_favorite_metadata
 
     favorites = get_favorites()
     video_ids = [fav.get("video_id") for fav in favorites if fav.get("video_id")]
@@ -303,6 +345,8 @@ def refresh_favorites():
                 like_count=video_stats.get("like_count"),
                 comment_count=video_stats.get("comment_count"),
             )
+            if video_stats.get("published_at"):
+                update_favorite_metadata(video_id, published_at=video_stats["published_at"])
             updated += 1
 
     return jsonify({"total": len(video_ids), "updated": updated, "missing": missing})

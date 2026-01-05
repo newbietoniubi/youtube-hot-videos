@@ -660,6 +660,7 @@
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 7;
     const QUICK_PRESETS = [
+      { label: 'common words', keywords: ['a|about|after|already|also|although|always|am|an|and|are|as|at|back|be|because|best|between|big|but|by|came|can|cat|come|could|day|did|do|dog|even|find|first|for|found|from|gave|get|give|go|good|got|great|had|have|he|her|here|him|how|i|if|in|into|is|it|just|knew|know|last|let|life|like|little|long|look|made|make|man|may|me|might|more|must|need|never|new|not|now|of|old|on|one|only|or|other|out|over|people|really|right|said|saw|say|see|she|should|show|so|still|take|tell|that|the|them|then|there|these|they|thing|think|this|those|thought|through|time|to|told|too|took|try|two|use|very|want|was|way|we|well|went|were|what|when|where|which|while|who|why|will|with|woman|work|world|would|year|you'] },
       { label: 'kpop set', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
       { label: 'jinu', keywords: ['jinu'] },
       { label: 'rumi', keywords: ['rumi'] },
@@ -1068,6 +1069,7 @@
         const views = fmtCompact(item.view_count);
         const likes = fmtCompact(item.like_count);
         const comments = fmtCompact(item.comment_count);
+        const subs = item.subscriber_count ? fmtCompact(item.subscriber_count) : null;
         const published = (item.published_at || '').replace('T', ' ').replace('Z', '');
         return `
         <div class="video-card">
@@ -1077,6 +1079,7 @@
           <div class="video-body">
             <a class="video-title" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>
             <div class="video-meta">频道：${escapeHtml(item.channel_title || '')}</div>
+            ${subs ? `<div class="video-meta">👥 订阅者：${subs}</div>` : ''}
             <div class="video-meta">👁️ ${views} · 👍 ${likes} · 💬 ${comments}</div>
             <div class="video-meta">发布时间：${published}</div>
             <div class="video-actions">

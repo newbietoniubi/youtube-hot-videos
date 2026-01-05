@@ -215,5 +215,22 @@ def get_favorite_with_latest_stats(video_id: str) -> Optional[Dict]:
     return dict(row) if row else None
 
 
+
+def update_favorite_metadata(video_id: str, published_at: str = None) -> None:
+    """Update metadata for a favorited video."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    if published_at:
+        cursor.execute("""
+            UPDATE favorites 
+            SET published_at = ? 
+            WHERE video_id = ?
+        """, (published_at, video_id))
+        
+    conn.commit()
+    conn.close()
+
+
 # Initialize database on module import
 init_db()
