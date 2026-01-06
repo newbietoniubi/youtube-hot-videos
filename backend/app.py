@@ -104,7 +104,7 @@ def fetch_shorts(keywords: str, max_results: int, days: int | None, region: str 
             duration_seconds = parse_iso_duration(
                 item.get("contentDetails", {}).get("duration", "")
             )
-            if duration_seconds <= 0 or duration_seconds > 60:
+            if duration_seconds <= 0 or duration_seconds > 61:
                 continue
 
             stats = item.get("statistics", {})
