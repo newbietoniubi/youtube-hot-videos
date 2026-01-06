@@ -660,7 +660,7 @@
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 3;
     const QUICK_PRESETS = [
-      { label: 'common words', keywords: ['a|about|after|already|also|although|always|am|an|and|are|as|at|back|be|because|best|between|big|but|by|came|can|cat|come|could|day|did|do|dog|even|find|first|for|found|from|gave|get|give|go|good|got|great|had|have|he|her|here|him|how|i|if|in|into|is|it|just|knew|know|last|let|life|like|little|long|look|made|make|man|may|me|might|more|must|need|never|new|not|now|of|old|on|one|only|or|other|out|over|people|really|right|said|saw|say|see|she|should|show|so|still|take|tell|that|the|them|then|there|these|they|thing|think|this|those|thought|through|time|to|told|too|took|try|two|use|very|want|was|way|we|well|went|were|what|when|where|which|while|who|why|will|with|woman|work|world|would|year|you'] },
+      { label: 'common words', keywords: ['a|about|after|already|also|although|always|am|an|and|are|as|at|back|be|because|best|between|big|but|by|came|can|cat|come|could|day|did|do|dog|even|find|first|for|found|from|gave|get|give|go|good|got|great|had|have|he|her|here|him|how|i|if|in|into|is|it|just|knew|know|last|let|life|like|little|long|look|made|make|man|may|me|might|more|must|need|never|new|not|now|of|old|on|one|only|or|other|out|over|people|really|right|said|saw|say|see|she|shorts|should|show|so|still|take|tell|that|the|them|then|there|these|they|thing|think|this|those|thought|through|time|to|told|too|took|trend|try|two|use|very|want|was|way|we|well|went|were|what|when|where|which|while|who|why|will|with|woman|work|world|would|year|you'] },
       { label: 'the', keywords: ['the'] },
       { label: 'be', keywords: ['be|am|is|are|was|were'] },
       { label: 'to', keywords: ['to'] },
@@ -671,6 +671,16 @@
       { label: 'that', keywords: ['that'] },
       { label: 'have', keywords: ['have'] },
       { label: 'i', keywords: ['i'] },
+      { label: 'it', keywords: ['it'] },
+      { label: 'for', keywords: ['for'] },
+      { label: 'not', keywords: ['not'] },
+      { label: 'on', keywords: ['on'] },
+      { label: 'with', keywords: ['with'] },
+      { label: 'he', keywords: ['he'] },
+      { label: 'as', keywords: ['as'] },
+      { label: 'you', keywords: ['you'] },
+      { label: 'do', keywords: ['do'] },
+      { label: 'at', keywords: ['at'] },
       { label: 'kpop set', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
       { label: 'jinu', keywords: ['jinu'] },
       { label: 'rumi', keywords: ['rumi'] },
@@ -696,6 +706,29 @@
       line: '#264653',
       area: 'rgba(38, 70, 83, 0.2)',
       radarArea: 'rgba(67, 121, 70, 0.4)'
+    };
+
+    // Shared chart styling for consistent UX
+    const CHART_STYLE = {
+      title: {
+        left: 16,
+        top: 16,
+        textStyle: { fontSize: 16, fontWeight: 600, color: '#2D2D2A' }
+      },
+      grid: { left: 56, right: 24, top: 56, bottom: 48 },
+      // For non-axis charts (wordCloud, radar, pie)
+      centerContent: {
+        center: ['50%', '55%'],
+        radius: '65%'
+      },
+      tooltip: {
+        backgroundColor: 'rgba(255,255,255,0.95)',
+        borderColor: '#E0E0D6',
+        textStyle: { color: '#2D2D2A', fontSize: 13 }
+      },
+      axisLine: { lineStyle: { color: '#C8C8BE' } },
+      axisLabel: { color: '#5A5A52', fontSize: 12 },
+      splitLine: { lineStyle: { color: '#E8E8E0', type: 'dashed' } }
     };
 
     function log(msg) {
@@ -957,40 +990,112 @@
         {
           id: 'chart1',
           option: {
-            title: { text: '互动分布' },
-            tooltip: {},
-            xAxis: { type: 'category', data: ['观看', '点赞', '评论'] },
-            yAxis: { type: 'value' },
-            series: [{ type: 'bar', data: [viewSum, likeSum, commentSum], itemStyle: { color: CHART_COLORS.primary } }]
+            title: {
+              text: '互动分布',
+              left: 16,
+              top: 16,
+              textStyle: { fontSize: 16, fontWeight: 600, color: '#2D2D2A' }
+            },
+            tooltip: {
+              trigger: 'axis',
+              axisPointer: { type: 'shadow' },
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              borderColor: '#E0E0D6',
+              textStyle: { color: '#2D2D2A' },
+              formatter: params => {
+                const p = params[0];
+                const fmt = v => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : v;
+                return `<strong>${p.name}</strong><br/>${fmt(p.value)} (${p.value.toLocaleString()})`;
+              }
+            },
+            grid: { left: 72, right: 24, top: 64, bottom: 48 },
+            xAxis: {
+              type: 'category',
+              data: ['观看', '点赞', '评论'],
+              axisLine: { lineStyle: { color: '#C8C8BE' } },
+              axisLabel: { color: '#5A5A52', fontSize: 13 }
+            },
+            yAxis: {
+              type: 'log',
+              min: 1,
+              axisLine: { show: false },
+              splitLine: { lineStyle: { color: '#E8E8E0', type: 'dashed' } },
+              axisLabel: {
+                color: '#8A8A82',
+                fontSize: 12,
+                formatter: val => val >= 1e9 ? (val / 1e9).toFixed(0) + 'B' : val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : val
+              }
+            },
+            series: [{
+              type: 'bar',
+              data: [viewSum, likeSum, commentSum],
+              barWidth: '50%',
+              itemStyle: {
+                color: CHART_COLORS.primary,
+                borderRadius: [4, 4, 0, 0]
+              },
+              label: {
+                show: true,
+                position: 'top',
+                color: '#5A5A52',
+                fontSize: 11,
+                formatter: p => p.value >= 1e9 ? (p.value / 1e9).toFixed(1) + 'B' : p.value >= 1e6 ? (p.value / 1e6).toFixed(1) + 'M' : p.value >= 1e3 ? (p.value / 1e3).toFixed(0) + 'K' : p.value
+              }
+            }]
           }
         },
         {
           id: 'chart2',
           option: {
-            title: { text: '时长分布(秒)' },
-            tooltip: {},
-            xAxis: { type: 'category', data: ['0-15', '15-30', '30-45', '45-60', '60-90'] },
-            yAxis: { type: 'value' },
-            series: [{ type: 'bar', data: durationBuckets, itemStyle: { color: CHART_COLORS.teal } }]
+            title: { text: '时长分布(秒)', ...CHART_STYLE.title },
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, ...CHART_STYLE.tooltip },
+            grid: CHART_STYLE.grid,
+            xAxis: { type: 'category', data: ['0-15', '15-30', '30-45', '45-60', '60-90'], axisLine: CHART_STYLE.axisLine, axisLabel: CHART_STYLE.axisLabel },
+            yAxis: { type: 'value', axisLine: { show: false }, splitLine: CHART_STYLE.splitLine, axisLabel: CHART_STYLE.axisLabel },
+            series: [{ type: 'bar', data: durationBuckets, barWidth: '50%', itemStyle: { color: CHART_COLORS.teal, borderRadius: [4, 4, 0, 0] } }]
           }
         },
         {
           id: 'chart3',
           option: {
-            title: { text: '观看-点赞散点' },
-            tooltip: { trigger: 'item' },
-            xAxis: { type: 'value', name: '观看' },
-            yAxis: { type: 'value', name: '点赞' },
-            series: [{ type: 'scatter', data: scatter, symbolSize: 6, itemStyle: { color: CHART_COLORS.orange } }]
+            title: { text: '观看-点赞散点', ...CHART_STYLE.title },
+            tooltip: {
+              trigger: 'item',
+              ...CHART_STYLE.tooltip,
+              formatter: params => `<strong>观看:</strong> ${params.value[0].toLocaleString()}<br/><strong>点赞:</strong> ${params.value[1].toLocaleString()}`
+            },
+            grid: CHART_STYLE.grid,
+            xAxis: {
+              type: 'value',
+              name: '观看',
+              nameLocation: 'center',
+              nameGap: 32,
+              nameTextStyle: { color: '#5A5A52', fontSize: 13 },
+              axisLine: CHART_STYLE.axisLine,
+              splitLine: CHART_STYLE.splitLine,
+              axisLabel: { ...CHART_STYLE.axisLabel, formatter: val => val >= 1e9 ? (val / 1e9).toFixed(0) + 'B' : val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : val }
+            },
+            yAxis: {
+              type: 'value',
+              name: '点赞',
+              nameLocation: 'center',
+              nameGap: 40,
+              nameTextStyle: { color: '#5A5A52', fontSize: 13 },
+              axisLine: { show: false },
+              splitLine: CHART_STYLE.splitLine,
+              axisLabel: { ...CHART_STYLE.axisLabel, formatter: val => val >= 1e9 ? (val / 1e9).toFixed(0) + 'B' : val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : val }
+            },
+            series: [{ type: 'scatter', data: scatter, symbolSize: 8, itemStyle: { color: CHART_COLORS.orange } }]
           }
         },
         {
           id: 'chart4',
           option: {
-            title: { text: '发布时间趋势' },
-            tooltip: { trigger: 'axis' },
-            xAxis: { type: 'category', data: byMonth.map(d => d[0]) },
-            yAxis: { type: 'value' },
+            title: { text: '发布时间趋势', ...CHART_STYLE.title },
+            tooltip: { trigger: 'axis', ...CHART_STYLE.tooltip },
+            grid: CHART_STYLE.grid,
+            xAxis: { type: 'category', data: byMonth.map(d => d[0]), axisLine: CHART_STYLE.axisLine, axisLabel: CHART_STYLE.axisLabel },
+            yAxis: { type: 'value', axisLine: { show: false }, splitLine: CHART_STYLE.splitLine, axisLabel: CHART_STYLE.axisLabel },
             series: [{ type: 'line', data: byMonth.map(d => d[1]), smooth: true, areaStyle: { color: CHART_COLORS.area }, lineStyle: { color: CHART_COLORS.line } }]
           },
           onClick: params => {
@@ -1002,11 +1107,30 @@
         {
           id: 'chart5',
           option: {
-            title: { text: '热门频道' },
-            tooltip: {},
-            xAxis: { type: 'value' },
-            yAxis: { type: 'category', data: channelCounts.map(c => c.title).reverse() },
-            series: [{ type: 'bar', data: channelCounts.map(c => c.count).reverse(), itemStyle: { color: CHART_COLORS.yellow } }]
+            title: { text: '热门频道', ...CHART_STYLE.title },
+            tooltip: {
+              trigger: 'axis',
+              axisPointer: { type: 'shadow' },
+              ...CHART_STYLE.tooltip,
+              formatter: params => {
+                const p = params[0];
+                return `<strong>${p.name}</strong><br/>视频数：${p.value}`;
+              }
+            },
+            grid: { left: 120, right: 24, top: 56, bottom: 48 },
+            xAxis: { type: 'value', axisLine: { show: false }, splitLine: CHART_STYLE.splitLine, axisLabel: CHART_STYLE.axisLabel },
+            yAxis: {
+              type: 'category',
+              data: channelCounts.map(c => c.title).reverse(),
+              axisLine: CHART_STYLE.axisLine,
+              axisLabel: {
+                ...CHART_STYLE.axisLabel,
+                width: 100,
+                overflow: 'truncate',
+                ellipsis: '...'
+              }
+            },
+            series: [{ type: 'bar', data: channelCounts.map(c => c.count).reverse(), barWidth: '50%', itemStyle: { color: CHART_COLORS.yellow, borderRadius: [0, 4, 4, 0] } }]
           },
           onClick: params => {
             const index = channelCounts.length - 1 - params.dataIndex;
@@ -1019,10 +1143,14 @@
         {
           id: 'chart6',
           option: {
-            title: { text: '标签词云' },
+            title: { text: '标签词云', ...CHART_STYLE.title },
             series: [{
               type: 'wordCloud',
               shape: 'circle',
+              left: 'center',
+              top: 'center',
+              width: '85%',
+              height: '70%',
               sizeRange: [12, 42],
               rotationRange: [0, 0],
               textStyle: { color: () => `hsl(${Math.random() * 60 + 100}, 50%, 40%)` },
@@ -1033,24 +1161,36 @@
         {
           id: 'chart7',
           option: {
-            title: { text: '参与度雷达' },
-            tooltip: {},
+            title: { text: '参与度雷达', ...CHART_STYLE.title },
+            tooltip: { ...CHART_STYLE.tooltip },
             radar: {
+              center: ['50%', '55%'],
+              radius: '65%',
               indicator: [
                 { name: '观看', max: radarMax },
                 { name: '点赞', max: radarMax },
                 { name: '评论', max: radarMax }
-              ]
+              ],
+              axisLine: { lineStyle: { color: '#C8C8BE' } },
+              splitLine: { lineStyle: { color: '#E8E8E0' } },
+              splitArea: { areaStyle: { color: ['rgba(255,255,255,0)', 'rgba(240,240,235,0.3)'] } }
             },
-            series: [{ type: 'radar', data: [{ value: [viewSum, likeSum, commentSum], areaStyle: { color: CHART_COLORS.radarArea }, lineStyle: { color: CHART_COLORS.primary }, itemStyle: { color: CHART_COLORS.primary } }] }]
+            series: [{ type: 'radar', data: [{ value: [viewSum, likeSum, commentSum], areaStyle: { color: CHART_COLORS.radarArea }, lineStyle: { color: CHART_COLORS.primary, width: 2 }, itemStyle: { color: CHART_COLORS.primary } }] }]
           }
         },
         {
           id: 'chart8',
           option: {
-            title: { text: '观看分布' },
-            tooltip: { trigger: 'item' },
-            series: [{ type: 'pie', radius: ['30%', '70%'], data: viewBuckets }]
+            title: { text: '观看分布', ...CHART_STYLE.title },
+            tooltip: { trigger: 'item', ...CHART_STYLE.tooltip, formatter: '{b}: {c} ({d}%)' },
+            series: [{
+              type: 'pie',
+              radius: ['35%', '70%'],
+              center: ['50%', '55%'],
+              data: viewBuckets,
+              label: { color: '#5A5A52', fontSize: 12 },
+              itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 }
+            }]
           }
         },
       ];
