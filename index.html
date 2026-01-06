@@ -711,11 +711,12 @@
     // Shared chart styling for consistent UX
     const CHART_STYLE = {
       title: {
-        left: 16,
+        left: 'center',
         top: 16,
         textStyle: { fontSize: 16, fontWeight: 600, color: '#2D2D2A' }
       },
       grid: { left: 56, right: 24, top: 56, bottom: 48 },
+      gridWide: { left: 120, right: 24, top: 56, bottom: 48 }, // For horizontal bar charts
       // For non-axis charts (wordCloud, radar, pie)
       centerContent: {
         center: ['50%', '55%'],
@@ -728,7 +729,10 @@
       },
       axisLine: { lineStyle: { color: '#C8C8BE' } },
       axisLabel: { color: '#5A5A52', fontSize: 12 },
-      splitLine: { lineStyle: { color: '#E8E8E0', type: 'dashed' } }
+      nameTextStyle: { color: '#5A5A52', fontSize: 13 },
+      splitLine: { lineStyle: { color: '#E8E8E0', type: 'dashed' } },
+      barStyle: { barWidth: '50%', borderRadius: [4, 4, 0, 0] },
+      barStyleHorizontal: { barWidth: '50%', borderRadius: [0, 4, 4, 0] }
     };
 
     function log(msg) {
@@ -990,54 +994,43 @@
         {
           id: 'chart1',
           option: {
-            title: {
-              text: '互动分布',
-              left: 16,
-              top: 16,
-              textStyle: { fontSize: 16, fontWeight: 600, color: '#2D2D2A' }
-            },
+            title: { text: '互动分布', ...CHART_STYLE.title },
             tooltip: {
               trigger: 'axis',
               axisPointer: { type: 'shadow' },
-              backgroundColor: 'rgba(255,255,255,0.95)',
-              borderColor: '#E0E0D6',
-              textStyle: { color: '#2D2D2A' },
+              ...CHART_STYLE.tooltip,
               formatter: params => {
                 const p = params[0];
                 const fmt = v => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : v;
                 return `<strong>${p.name}</strong><br/>${fmt(p.value)} (${p.value.toLocaleString()})`;
               }
             },
-            grid: { left: 72, right: 24, top: 64, bottom: 48 },
+            grid: { ...CHART_STYLE.grid, left: 72 },
             xAxis: {
               type: 'category',
               data: ['观看', '点赞', '评论'],
-              axisLine: { lineStyle: { color: '#C8C8BE' } },
-              axisLabel: { color: '#5A5A52', fontSize: 13 }
+              axisLine: CHART_STYLE.axisLine,
+              axisLabel: { ...CHART_STYLE.axisLabel, fontSize: 13 }
             },
             yAxis: {
               type: 'log',
               min: 1,
               axisLine: { show: false },
-              splitLine: { lineStyle: { color: '#E8E8E0', type: 'dashed' } },
+              splitLine: CHART_STYLE.splitLine,
               axisLabel: {
-                color: '#8A8A82',
-                fontSize: 12,
+                ...CHART_STYLE.axisLabel,
                 formatter: val => val >= 1e9 ? (val / 1e9).toFixed(0) + 'B' : val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : val
               }
             },
             series: [{
               type: 'bar',
               data: [viewSum, likeSum, commentSum],
-              barWidth: '50%',
-              itemStyle: {
-                color: CHART_COLORS.primary,
-                borderRadius: [4, 4, 0, 0]
-              },
+              ...CHART_STYLE.barStyle,
+              itemStyle: { color: CHART_COLORS.primary, borderRadius: [4, 4, 0, 0] },
               label: {
                 show: true,
                 position: 'top',
-                color: '#5A5A52',
+                ...CHART_STYLE.axisLabel,
                 fontSize: 11,
                 formatter: p => p.value >= 1e9 ? (p.value / 1e9).toFixed(1) + 'B' : p.value >= 1e6 ? (p.value / 1e6).toFixed(1) + 'M' : p.value >= 1e3 ? (p.value / 1e3).toFixed(0) + 'K' : p.value
               }
@@ -1070,7 +1063,7 @@
               name: '观看',
               nameLocation: 'center',
               nameGap: 32,
-              nameTextStyle: { color: '#5A5A52', fontSize: 13 },
+              nameTextStyle: CHART_STYLE.nameTextStyle,
               axisLine: CHART_STYLE.axisLine,
               splitLine: CHART_STYLE.splitLine,
               axisLabel: { ...CHART_STYLE.axisLabel, formatter: val => val >= 1e9 ? (val / 1e9).toFixed(0) + 'B' : val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : val }
@@ -1080,7 +1073,7 @@
               name: '点赞',
               nameLocation: 'center',
               nameGap: 40,
-              nameTextStyle: { color: '#5A5A52', fontSize: 13 },
+              nameTextStyle: CHART_STYLE.nameTextStyle,
               axisLine: { show: false },
               splitLine: CHART_STYLE.splitLine,
               axisLabel: { ...CHART_STYLE.axisLabel, formatter: val => val >= 1e9 ? (val / 1e9).toFixed(0) + 'B' : val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : val }
@@ -1117,7 +1110,7 @@
                 return `<strong>${p.name}</strong><br/>视频数：${p.value}`;
               }
             },
-            grid: { left: 120, right: 24, top: 56, bottom: 48 },
+            grid: CHART_STYLE.gridWide,
             xAxis: { type: 'value', axisLine: { show: false }, splitLine: CHART_STYLE.splitLine, axisLabel: CHART_STYLE.axisLabel },
             yAxis: {
               type: 'category',
@@ -1164,14 +1157,13 @@
             title: { text: '参与度雷达', ...CHART_STYLE.title },
             tooltip: { ...CHART_STYLE.tooltip },
             radar: {
-              center: ['50%', '55%'],
-              radius: '65%',
+              ...CHART_STYLE.centerContent,
               indicator: [
                 { name: '观看', max: radarMax },
                 { name: '点赞', max: radarMax },
                 { name: '评论', max: radarMax }
               ],
-              axisLine: { lineStyle: { color: '#C8C8BE' } },
+              axisLine: CHART_STYLE.axisLine,
               splitLine: { lineStyle: { color: '#E8E8E0' } },
               splitArea: { areaStyle: { color: ['rgba(255,255,255,0)', 'rgba(240,240,235,0.3)'] } }
             },
