@@ -660,7 +660,7 @@
     const DEFAULT_MAX = 20;
     const DEFAULT_DAYS = 3;
     const QUICK_PRESETS = [
-      { label: 'common words', keywords: ['a|about|after|already|also|although|always|am|an|and|are|as|at|back|be|because|best|between|big|but|by|came|can|cat|come|could|day|did|do|dog|even|find|first|for|found|from|gave|get|give|go|good|got|great|had|have|he|her|here|him|how|i|if|in|into|is|it|just|knew|know|last|let|life|like|little|long|look|made|make|man|may|me|might|more|must|need|never|new|not|now|of|old|on|one|only|or|other|out|over|people|really|right|said|saw|say|see|she|shorts|should|show|so|still|take|tell|that|the|them|then|there|these|they|thing|think|this|those|thought|through|time|to|told|too|took|trend|try|two|use|very|want|was|way|we|well|went|were|what|when|where|which|while|who|why|will|with|woman|work|world|would|year|you'] },
+      { label: 'common words', keywords: ['a|about|after|already|also|although|always|am|an|and|are|as|at|back|be|because|best|between|big|but|by|came|can|cat|come|could|day|did|do|dog|even|find|first|for|found|from|gave|get|give|go|good|got|great|had|have|he|her|here|him|how|i|if|in|into|is|it|just|knew|know|last|let|life|like|little|long|look|made|make|man|may|me|might|more|must|need|never|new|not|now|of|old|on|one|only|or|other|out|over|people|really|right|said|saw|say|see|she|shorts|should|show|so|still|story|take|tell|that|the|them|then|there|these|they|thing|think|this|those|thought|through|time|to|told|too|took|trend|try|two|use|very|want|was|way|we|well|went|were|what|when|where|which|while|who|why|will|with|woman|work|world|would|year|you'] },
       { label: 'the', keywords: ['the'] },
       { label: 'be', keywords: ['be|am|is|are|was|were'] },
       { label: 'to', keywords: ['to'] },
@@ -681,7 +681,7 @@
       { label: 'you', keywords: ['you'] },
       { label: 'do', keywords: ['do'] },
       { label: 'at', keywords: ['at'] },
-      { label: 'kpop set', keywords: ['rumi', 'mira', 'zoey', 'kpop'] },
+      { label: 'kpop set', keywords: ['rumi', 'mira', 'zoey', 'kpop', 'jinu'] },
       { label: 'jinu', keywords: ['jinu'] },
       { label: 'rumi', keywords: ['rumi'] },
       { label: 'mira', keywords: ['mira'] },
@@ -813,7 +813,7 @@
           </a>
           <div class="video-body">
             <a class="video-title" href="${url}" target="_blank">${escapeHtml(item.title)}</a>
-            <div class="video-meta">频道：${escapeHtml(item.channel_title || '')}</div>
+            <div class="video-meta"><span>频道：<a href="https://www.youtube.com/channel/${item.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${escapeHtml(item.channel_title || '')}</a></span></div>
             <div class="video-meta">👁️ ${views}</div>
             <div class="video-meta">收藏于：${created}</div>
             <div class="video-actions">
@@ -1220,7 +1220,7 @@
           </a>
           <div class="video-body">
             <a class="video-title" href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title || '')}</a>
-            <div class="video-meta">频道：${escapeHtml(item.channel_title || '')}</div>
+            <div class="video-meta"><span>频道：<a href="https://www.youtube.com/channel/${item.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit;">${escapeHtml(item.channel_title || '')}</a></span></div>
             ${subs ? `<div class="video-meta">👥 订阅者：${subs}</div>` : ''}
             <div class="video-meta">👁️ ${views} · 👍 ${likes} · 💬 ${comments}</div>
             <div class="video-meta">发布时间：${published}</div>
